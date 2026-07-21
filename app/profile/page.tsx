@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { signOut } from "@/lib/actions/auth";
 import { BottomTabBar } from "@/components/BottomTabBar";
+import { DisplayNameForm } from "./DisplayNameForm";
 
 export default async function ProfilePage() {
   const supabase = await createClient();
@@ -24,31 +25,57 @@ export default async function ProfilePage() {
     }>();
 
   return (
-    <div className="flex-1 flex flex-col">
+    <div className="flex-1 flex flex-col" style={{ background: "var(--color-paper)" }}>
       <main className="flex-1 max-w-lg mx-auto w-full px-4 py-6">
-        <h1 className="text-lg font-bold text-neutral-900 mb-6">
+        <h1
+          className="text-lg font-bold mb-6"
+          style={{ color: "var(--color-ink)" }}
+        >
           プロフィール
         </h1>
 
-        <div className="rounded-2xl border border-neutral-200 p-5 text-sm space-y-2 mb-6">
+        <div
+          className="rounded-2xl p-5 text-sm space-y-3 mb-4"
+          style={{ background: "var(--color-paper-raised)", border: "1px solid var(--color-line)" }}
+        >
           <p>
-            <span className="text-neutral-400">メール: </span>
-            {user.email ?? "(Googleアカウント)"}
+            <span className="font-medium" style={{ color: "var(--color-slate)" }}>
+              メール:{" "}
+            </span>
+            <span style={{ color: "var(--color-ink)" }}>
+              {user.email ?? "(Googleアカウント)"}
+            </span>
           </p>
           <p>
-            <span className="text-neutral-400">ユーザー名: </span>
-            {profile?.username ?? "(未取得)"}
+            <span className="font-medium" style={{ color: "var(--color-slate)" }}>
+              ユーザー名:{" "}
+            </span>
+            <span style={{ color: "var(--color-ink)" }}>
+              {profile?.username ?? "(未取得)"}
+            </span>
           </p>
           <p>
-            <span className="text-neutral-400">表示名: </span>
-            {profile?.display_name ?? "(未設定)"}
+            <span className="font-medium" style={{ color: "var(--color-slate)" }}>
+              表示名:{" "}
+            </span>
+            <span className="font-bold" style={{ color: "var(--color-ink)" }}>
+              {profile?.display_name ?? "(未設定)"}
+            </span>
           </p>
+        </div>
+
+        <div
+          className="rounded-2xl p-5 mb-6"
+          style={{ background: "var(--color-paper-raised)", border: "1px solid var(--color-line)" }}
+        >
+          <DisplayNameForm currentDisplayName={profile?.display_name ?? ""} />
         </div>
 
         <form action={signOut}>
           <button
             type="submit"
-            className="w-full rounded-full border border-neutral-300 py-3 text-sm font-medium text-neutral-700 hover:bg-neutral-50 transition-colors"
+            className="w-full rounded-full py-3 text-sm font-bold border-2 transition-colors hover:bg-black/[0.03]"
+            style={{ borderColor: "var(--color-line)", color: "var(--color-ink)" }}
           >
             ログアウト
           </button>

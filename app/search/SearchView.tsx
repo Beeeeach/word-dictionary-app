@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { PostCard } from "@/components/PostCard";
+import { TabBar } from "@/components/TabBar";
 import { searchDictionary, searchMyDictionary } from "@/lib/actions/search";
 import type { EmotionTag, PostWithRelations } from "@/lib/types/database.types";
 
@@ -41,39 +42,22 @@ export function SearchView({
     runSearch(keyword, tab);
   }
 
-  function handleTabChange(nextTab: Tab) {
-    setTab(nextTab);
-    if (keyword.trim()) runSearch(keyword, nextTab);
+  function handleTabChange(nextTab: string) {
+    setTab(nextTab as Tab);
+    if (keyword.trim()) runSearch(keyword, nextTab as Tab);
   }
 
   return (
     <div>
       {/* 自分の辞書/みんなの辞書 タブ */}
-      <div className="flex mb-5 border-b border-neutral-200">
-        <button
-          type="button"
-          onClick={() => handleTabChange("all")}
-          className={`flex-1 pb-3 text-sm font-medium transition-colors ${
-            tab === "all"
-              ? "text-neutral-900 border-b-2 border-neutral-900"
-              : "text-neutral-400"
-          }`}
-        >
-          みんなの辞書
-        </button>
-        <button
-          type="button"
-          onClick={() => handleTabChange("mine")}
-          disabled={!currentUserId}
-          className={`flex-1 pb-3 text-sm font-medium transition-colors ${
-            tab === "mine"
-              ? "text-neutral-900 border-b-2 border-neutral-900"
-              : "text-neutral-400"
-          } ${!currentUserId ? "opacity-40" : ""}`}
-        >
-          自分の辞書
-        </button>
-      </div>
+      <TabBar
+        tabs={[
+          { key: "all", label: "みんなの辞書" },
+          { key: "mine", label: "自分の辞書", disabled: !currentUserId },
+        ]}
+        active={tab}
+        onChange={handleTabChange}
+      />
 
       {/* キーワード検索フォーム */}
       <form onSubmit={handleSubmit} className="mb-5">
@@ -82,11 +66,15 @@ export function SearchView({
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
             placeholder="単語を検索..."
-            className="flex-1 rounded-full border border-neutral-200 px-4 py-2.5 text-sm outline-none focus:border-neutral-900 transition-colors"
+            className="flex-1 rounded-full border-2 px-4 py-2.5 text-sm outline-none transition-colors"
+            style={{ borderColor: "var(--color-line)", color: "var(--color-ink)" }}
+            onFocus={(e) => (e.currentTarget.style.borderColor = "var(--color-indigo)")}
+            onBlur={(e) => (e.currentTarget.style.borderColor = "var(--color-line)")}
           />
           <button
             type="submit"
-            className="rounded-full bg-neutral-900 text-white px-5 py-2.5 text-sm font-medium"
+            className="rounded-full text-white px-5 py-2.5 text-sm font-bold"
+            style={{ background: "var(--color-ink)" }}
           >
             検索
           </button>
@@ -95,17 +83,19 @@ export function SearchView({
 
       {/* 検索結果 */}
       {isPending && (
-        <p className="text-center text-xs text-neutral-300 py-8">検索中...</p>
+        <p className="text-center text-xs py-8" style={{ color: "var(--color-slate-light)" }}>
+          検索中...
+        </p>
       )}
 
       {!isPending && searched && results && results.length === 0 && (
-        <p className="text-center text-sm text-neutral-400 py-16">
+        <p className="text-center text-sm py-16" style={{ color: "var(--color-slate)" }}>
           「{keyword}」に一致する単語は見つかりませんでした
         </p>
       )}
 
       {!isPending && !searched && (
-        <p className="text-center text-sm text-neutral-300 py-16">
+        <p className="text-center text-sm py-16" style={{ color: "var(--color-slate-light)" }}>
           気になる単語を検索してみましょう
         </p>
       )}

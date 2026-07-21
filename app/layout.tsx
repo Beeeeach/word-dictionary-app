@@ -8,8 +8,8 @@ import { OneSignalInit } from "@/components/OneSignalInit";
 //  許可されていないためビルド確認できないので、一旦システムフォントで進める)
 
 export const metadata: Metadata = {
-  title: "みんなの言葉辞書",
-  description: "面白い単語・びっくりした単語を投稿し、みんなで育てる辞書アプリ",
+  title: "DicDic | コトバを広げるSNS",
+  description: "面白い単語・びっくりした単語を投稿し、みんなで育てる言葉の辞書SNS「DicDic」",
   manifest: "/manifest.json",
 };
 

@@ -18,10 +18,16 @@ export function DictionaryStats({
       {items.map((item) => (
         <div
           key={item.label}
-          className="rounded-2xl bg-neutral-50 px-3 py-4 text-center"
+          className="rounded-2xl px-3 py-4 text-center"
+          style={{ background: "var(--color-paper-raised)", border: "1px solid var(--color-line)" }}
         >
-          <p className="text-xl font-bold text-neutral-900">{item.value}</p>
-          <p className="text-[11px] text-neutral-400 mt-1 leading-tight">
+          <p className="text-2xl font-extrabold" style={{ color: "var(--color-coral)" }}>
+            {item.value}
+          </p>
+          <p
+            className="text-[11px] font-bold mt-1 leading-tight"
+            style={{ color: "var(--color-slate)" }}
+          >
             {item.label}
           </p>
         </div>

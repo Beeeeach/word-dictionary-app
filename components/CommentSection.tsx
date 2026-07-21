@@ -69,19 +69,25 @@ export function CommentSection({
       <button
         type="button"
         onClick={() => setExpanded((v) => !v)}
-        className="flex items-center gap-1 text-sm text-neutral-500 hover:text-neutral-700"
+        className="flex items-center gap-1 text-sm font-bold transition-colors"
+        style={{ color: "var(--color-slate)" }}
       >
         💬 {commentCount}
       </button>
 
       {expanded && (
-        <div className="mt-3 space-y-3 border-t border-neutral-100 pt-3">
+        <div
+          className="mt-3 space-y-3 border-t pt-3"
+          style={{ borderColor: "var(--color-line)" }}
+        >
           {loading && (
-            <p className="text-xs text-neutral-300">読み込み中...</p>
+            <p className="text-xs" style={{ color: "var(--color-slate-light)" }}>
+              読み込み中...
+            </p>
           )}
 
           {!loading && comments && comments.length === 0 && (
-            <p className="text-xs text-neutral-300">
+            <p className="text-xs" style={{ color: "var(--color-slate-light)" }}>
               まだコメントがありません
             </p>
           )}
@@ -95,14 +101,17 @@ export function CommentSection({
                 <div key={comment.id} className="flex gap-2 text-sm">
                   <div className="flex-1">
                     <div className="flex items-baseline gap-2">
-                      <span className="font-medium text-neutral-700 text-xs">
+                      <span
+                        className="font-bold text-xs"
+                        style={{ color: "var(--color-ink)" }}
+                      >
                         {name}
                       </span>
-                      <span className="text-[10px] text-neutral-300">
+                      <span className="text-[10px]" style={{ color: "var(--color-slate-light)" }}>
                         {timeAgo(comment.created_at)}
                       </span>
                     </div>
-                    <p className="text-neutral-600 whitespace-pre-wrap">
+                    <p className="whitespace-pre-wrap" style={{ color: "var(--color-ink)" }}>
                       {comment.body}
                     </p>
                   </div>
@@ -111,7 +120,8 @@ export function CommentSection({
                       type="button"
                       disabled={deletePending}
                       onClick={() => handleDelete(comment.id)}
-                      className="text-[10px] text-neutral-300 hover:text-red-500 shrink-0"
+                      className="text-[10px] font-bold shrink-0 transition-colors"
+                      style={{ color: "var(--color-slate-light)" }}
                     >
                       削除
                     </button>
@@ -127,23 +137,29 @@ export function CommentSection({
                 required
                 maxLength={500}
                 placeholder="コメントする..."
-                className="flex-1 rounded-full border border-neutral-200 px-3 py-1.5 text-sm outline-none focus:border-neutral-900 transition-colors"
+                className="flex-1 rounded-full border-2 px-3 py-1.5 text-sm outline-none transition-colors"
+                style={{ borderColor: "var(--color-line)", color: "var(--color-ink)" }}
+                onFocus={(e) => (e.currentTarget.style.borderColor = "var(--color-indigo)")}
+                onBlur={(e) => (e.currentTarget.style.borderColor = "var(--color-line)")}
               />
               <button
                 type="submit"
                 disabled={pending}
-                className="rounded-full bg-neutral-900 text-white px-4 py-1.5 text-xs font-medium disabled:opacity-50"
+                className="rounded-full text-white px-4 py-1.5 text-xs font-bold disabled:opacity-50"
+                style={{ background: "var(--color-ink)" }}
               >
                 送信
               </button>
             </form>
           ) : (
-            <p className="text-xs text-neutral-300">
+            <p className="text-xs" style={{ color: "var(--color-slate-light)" }}>
               コメントするにはログインしてください
             </p>
           )}
           {state?.error && (
-            <p className="text-xs text-red-500">{state.error}</p>
+            <p className="text-xs font-medium" style={{ color: "var(--color-coral-dark)" }}>
+              {state.error}
+            </p>
           )}
         </div>
       )}

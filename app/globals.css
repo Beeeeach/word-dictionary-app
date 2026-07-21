@@ -1,26 +1,56 @@
 @import "tailwindcss";
 
+/*
+ * DicDic デザイントークン
+ * - Paper: #FDFBF4 (生成りの紙、辞書のページのような温かみ)
+ * - Ink:   #1C1B29 (見出し・本文の濃紺黒。純黒より少し柔らかい)
+ * - Coral: #FF6B4A (いいね・主要CTA・アクセント)
+ * - Indigo:#4C4FE0 (リンク・アクティブタブ・ロゴ)
+ * - Slate: #6B6B7D (キャプション・補助テキスト。 #8B8FA3 よりコントラスト確保)
+ * - Line:  #E8E4D9 (罫線・区切り)
+ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --color-paper: #fdfbf4;
+  --color-paper-raised: #ffffff;
+  --color-ink: #1c1b29;
+  --color-coral: #ff6b4a;
+  --color-coral-dark: #e8512f;
+  --color-indigo: #4c4fe0;
+  --color-indigo-dark: #3638b8;
+  --color-slate: #5a5a6e;
+  --color-slate-light: #8b8b9e;
+  --color-line: #e8e4d9;
+
+  --background: var(--color-paper);
+  --foreground: var(--color-ink);
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif;
-  --font-mono: ui-monospace, monospace;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Hiragino Kaku Gothic ProN",
+    "Yu Gothic", "Noto Sans JP", sans-serif;
+  --font-display: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif;
+  --font-mono: ui-monospace, "SF Mono", monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+/*
+ * ダークモード分岐は意図的に廃止している。
+ * 以前は prefers-color-scheme: dark に応じて背景/文字色だけ切り替わり、
+ * 各コンポーネント側の色指定(text-neutral-400等)がその変化に追従していなかったため
+ * 「暗い背景に薄い文字」のような低コントラストが多発していた。
+ * ライトテーマの1系統に統一し、各コンポーネントで明示的にコントラストを設計する。
+ */
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
 }
+
+/* 見出し用のブランドロゴタイプ: レタースペーシングを締めて力強く */
+.brand-wordmark {
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+

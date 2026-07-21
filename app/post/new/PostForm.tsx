@@ -45,7 +45,10 @@ export function PostForm({ emotionTags }: { emotionTags: EmotionTag[] }) {
           maxLength={100}
           placeholder="出会った単語は？"
           autoFocus
-          className="w-full text-2xl font-bold placeholder:text-neutral-300 border-b-2 border-neutral-200 focus:border-neutral-900 outline-none py-3 transition-colors"
+          className="w-full text-2xl font-extrabold border-b-2 outline-none py-3 transition-colors bg-transparent"
+          style={{ borderColor: "var(--color-line)", color: "var(--color-ink)" }}
+          onFocus={(e) => (e.currentTarget.style.borderColor = "var(--color-coral)")}
+          onBlur={(e) => (e.currentTarget.style.borderColor = "var(--color-line)")}
         />
       </div>
 
@@ -53,7 +56,8 @@ export function PostForm({ emotionTags }: { emotionTags: EmotionTag[] }) {
       <div>
         <label
           htmlFor="meaning"
-          className="block text-xs text-neutral-400 mb-1"
+          className="block text-xs font-bold mb-1"
+          style={{ color: "var(--color-slate)" }}
         >
           意味（任意・自分なりの解釈でOK）
         </label>
@@ -62,7 +66,10 @@ export function PostForm({ emotionTags }: { emotionTags: EmotionTag[] }) {
           name="meaning"
           rows={2}
           placeholder="どういう意味だと思う？"
-          className="w-full rounded-xl border border-neutral-200 px-3 py-2 text-sm outline-none focus:border-neutral-900 transition-colors resize-none"
+          className="w-full rounded-xl border-2 px-3 py-2 text-sm outline-none transition-colors resize-none"
+          style={{ borderColor: "var(--color-line)", color: "var(--color-ink)" }}
+          onFocus={(e) => (e.currentTarget.style.borderColor = "var(--color-indigo)")}
+          onBlur={(e) => (e.currentTarget.style.borderColor = "var(--color-line)")}
         />
       </div>
 
@@ -70,7 +77,8 @@ export function PostForm({ emotionTags }: { emotionTags: EmotionTag[] }) {
       <div>
         <label
           htmlFor="context"
-          className="block text-xs text-neutral-400 mb-1"
+          className="block text-xs font-bold mb-1"
+          style={{ color: "var(--color-slate)" }}
         >
           出会った文脈（任意）
         </label>
@@ -79,14 +87,20 @@ export function PostForm({ emotionTags }: { emotionTags: EmotionTag[] }) {
           name="context"
           rows={2}
           placeholder="どこで・誰から・どんな場面で聞いた？"
-          className="w-full rounded-xl border border-neutral-200 px-3 py-2 text-sm outline-none focus:border-neutral-900 transition-colors resize-none"
+          className="w-full rounded-xl border-2 px-3 py-2 text-sm outline-none transition-colors resize-none"
+          style={{ borderColor: "var(--color-line)", color: "var(--color-ink)" }}
+          onFocus={(e) => (e.currentTarget.style.borderColor = "var(--color-indigo)")}
+          onBlur={(e) => (e.currentTarget.style.borderColor = "var(--color-line)")}
         />
       </div>
 
       {/* 感情タグ（任意・複数選択可） */}
       {emotionTags.length > 0 && (
         <div>
-          <span className="block text-xs text-neutral-400 mb-1.5">
+          <span
+            className="block text-xs font-bold mb-1.5"
+            style={{ color: "var(--color-slate)" }}
+          >
             この単語との出会いは？（任意・複数選択可）
           </span>
           <div className="flex flex-wrap gap-2">
@@ -97,11 +111,20 @@ export function PostForm({ emotionTags }: { emotionTags: EmotionTag[] }) {
                   key={tag.id}
                   type="button"
                   onClick={() => toggleTag(tag.id)}
-                  className={`rounded-full px-3 py-1.5 text-sm transition-colors ${
+                  className="rounded-full px-3 py-1.5 text-sm font-bold border-2 transition-colors"
+                  style={
                     selected
-                      ? "bg-orange-100 text-orange-700 border border-orange-300"
-                      : "bg-neutral-50 text-neutral-500 border border-neutral-200 hover:bg-neutral-100"
-                  }`}
+                      ? {
+                          background: "#FFF0EC",
+                          color: "var(--color-coral-dark)",
+                          borderColor: "var(--color-coral)",
+                        }
+                      : {
+                          background: "var(--color-paper-raised)",
+                          color: "var(--color-slate)",
+                          borderColor: "var(--color-line)",
+                        }
+                  }
                 >
                   {tag.emoji} {tag.name}
                 </button>
@@ -116,7 +139,11 @@ export function PostForm({ emotionTags }: { emotionTags: EmotionTag[] }) {
 
       {/* 写真（任意） */}
       <div>
-        <label htmlFor="photo" className="block text-xs text-neutral-400 mb-1.5">
+        <label
+          htmlFor="photo"
+          className="block text-xs font-bold mb-1.5"
+          style={{ color: "var(--color-slate)" }}
+        >
           写真（任意）
         </label>
         {photoPreview ? (
@@ -144,7 +171,8 @@ export function PostForm({ emotionTags }: { emotionTags: EmotionTag[] }) {
         ) : (
           <label
             htmlFor="photo"
-            className="flex items-center justify-center rounded-xl border border-dashed border-neutral-300 py-6 text-sm text-neutral-400 cursor-pointer hover:border-neutral-400 transition-colors"
+            className="flex items-center justify-center rounded-xl border-2 border-dashed py-6 text-sm font-bold cursor-pointer transition-colors"
+            style={{ borderColor: "var(--color-line)", color: "var(--color-slate)" }}
           >
             + 写真を追加する
           </label>
@@ -160,28 +188,38 @@ export function PostForm({ emotionTags }: { emotionTags: EmotionTag[] }) {
       </div>
 
       {/* 公開範囲 */}
-      <div className="flex items-center justify-between rounded-xl bg-neutral-50 px-4 py-3">
-        <span className="text-sm text-neutral-600">公開範囲</span>
-        <div className="flex rounded-full bg-white border border-neutral-200 p-0.5">
+      <div
+        className="flex items-center justify-between rounded-xl px-4 py-3"
+        style={{ background: "#F3F1E9" }}
+      >
+        <span className="text-sm font-bold" style={{ color: "var(--color-ink)" }}>
+          公開範囲
+        </span>
+        <div
+          className="flex rounded-full p-0.5"
+          style={{ background: "var(--color-paper-raised)", border: "1px solid var(--color-line)" }}
+        >
           <button
             type="button"
             onClick={() => setVisibility("public")}
-            className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+            className="rounded-full px-3 py-1 text-xs font-bold transition-colors"
+            style={
               visibility === "public"
-                ? "bg-neutral-900 text-white"
-                : "text-neutral-500"
-            }`}
+                ? { background: "var(--color-ink)", color: "#fff" }
+                : { color: "var(--color-slate)" }
+            }
           >
             公開
           </button>
           <button
             type="button"
             onClick={() => setVisibility("private")}
-            className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
+            className="rounded-full px-3 py-1 text-xs font-bold transition-colors"
+            style={
               visibility === "private"
-                ? "bg-neutral-900 text-white"
-                : "text-neutral-500"
-            }`}
+                ? { background: "var(--color-ink)", color: "#fff" }
+                : { color: "var(--color-slate)" }
+            }
           >
             非公開
           </button>
@@ -189,12 +227,17 @@ export function PostForm({ emotionTags }: { emotionTags: EmotionTag[] }) {
         <input type="hidden" name="visibility" value={visibility} />
       </div>
 
-      {state?.error && <p className="text-sm text-red-600">{state.error}</p>}
+      {state?.error && (
+        <p className="text-sm font-medium" style={{ color: "var(--color-coral-dark)" }}>
+          {state.error}
+        </p>
+      )}
 
       <button
         type="submit"
         disabled={pending}
-        className="w-full rounded-full bg-neutral-900 py-3 text-sm font-medium text-white hover:bg-neutral-800 transition-colors disabled:opacity-50"
+        className="w-full rounded-full py-3 text-sm font-bold text-white transition-colors disabled:opacity-50"
+        style={{ background: "var(--color-coral)" }}
       >
         {pending ? "投稿中..." : "投稿する"}
       </button>

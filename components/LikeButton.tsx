@@ -44,9 +44,10 @@ export function LikeButton({
       type="button"
       onClick={handleClick}
       disabled={disabled}
-      className={`flex items-center gap-1 transition-colors ${
-        liked ? "text-red-500" : "text-neutral-500"
-      } ${disabled ? "opacity-50 cursor-not-allowed" : "hover:text-red-500"}`}
+      className={`flex items-center gap-1 font-bold transition-colors ${
+        disabled ? "opacity-50 cursor-not-allowed" : ""
+      }`}
+      style={{ color: liked ? "var(--color-coral)" : "var(--color-slate)" }}
       title={disabled ? "ログインするといいねできます" : undefined}
     >
       <span>{liked ? "❤️" : "🤍"}</span>

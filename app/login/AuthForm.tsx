@@ -54,26 +54,33 @@ export function AuthForm() {
   return (
     <div className="w-full max-w-sm mx-auto">
       {/* モード切替タブ */}
-      <div className="flex mb-8 border-b border-neutral-200">
+      <div
+        className="flex mb-8 border-b-2"
+        style={{ borderColor: "var(--color-line)" }}
+      >
         <button
           type="button"
           onClick={() => setMode("signin")}
-          className={`flex-1 pb-3 text-sm font-medium transition-colors ${
-            mode === "signin"
-              ? "text-neutral-900 border-b-2 border-neutral-900"
-              : "text-neutral-400"
-          }`}
+          className="flex-1 pb-3 text-[15px] font-bold transition-colors"
+          style={{
+            color: mode === "signin" ? "var(--color-ink)" : "var(--color-slate-light)",
+            borderBottom:
+              mode === "signin" ? "2px solid var(--color-coral)" : "2px solid transparent",
+            marginBottom: "-2px",
+          }}
         >
           ログイン
         </button>
         <button
           type="button"
           onClick={() => setMode("signup")}
-          className={`flex-1 pb-3 text-sm font-medium transition-colors ${
-            mode === "signup"
-              ? "text-neutral-900 border-b-2 border-neutral-900"
-              : "text-neutral-400"
-          }`}
+          className="flex-1 pb-3 text-[15px] font-bold transition-colors"
+          style={{
+            color: mode === "signup" ? "var(--color-ink)" : "var(--color-slate-light)",
+            borderBottom:
+              mode === "signup" ? "2px solid var(--color-coral)" : "2px solid transparent",
+            marginBottom: "-2px",
+          }}
         >
           はじめる
         </button>
@@ -83,7 +90,8 @@ export function AuthForm() {
       <form action={signInWithGoogle}>
         <button
           type="submit"
-          className="w-full flex items-center justify-center gap-3 rounded-full border border-neutral-300 bg-white py-3 text-sm font-medium text-neutral-800 hover:bg-neutral-50 transition-colors"
+          className="w-full flex items-center justify-center gap-3 rounded-full border-2 py-3 text-sm font-bold transition-colors hover:bg-black/[0.03]"
+          style={{ borderColor: "var(--color-line)", color: "var(--color-ink)", background: "var(--color-paper-raised)" }}
         >
           <GoogleIcon />
           Googleで{mode === "signin" ? "ログイン" : "はじめる"}
@@ -91,9 +99,11 @@ export function AuthForm() {
       </form>
 
       <div className="flex items-center gap-3 my-6">
-        <div className="h-px flex-1 bg-neutral-200" />
-        <span className="text-xs text-neutral-400">または</span>
-        <div className="h-px flex-1 bg-neutral-200" />
+        <div className="h-px flex-1" style={{ background: "var(--color-line)" }} />
+        <span className="text-xs font-medium" style={{ color: "var(--color-slate)" }}>
+          または
+        </span>
+        <div className="h-px flex-1" style={{ background: "var(--color-line)" }} />
       </div>
 
       {/* メール/パスワードフォーム */}
@@ -108,7 +118,10 @@ export function AuthForm() {
             type="email"
             required
             placeholder="メールアドレス"
-            className="w-full rounded-xl border border-neutral-300 px-4 py-3 text-sm outline-none focus:border-neutral-900 transition-colors"
+            className="w-full rounded-xl border-2 px-4 py-3 text-sm outline-none transition-colors"
+            style={{ borderColor: "var(--color-line)", color: "var(--color-ink)" }}
+            onFocus={(e) => (e.currentTarget.style.borderColor = "var(--color-indigo)")}
+            onBlur={(e) => (e.currentTarget.style.borderColor = "var(--color-line)")}
           />
         </div>
         <div>
@@ -122,18 +135,24 @@ export function AuthForm() {
             required
             minLength={6}
             placeholder="パスワード（6文字以上）"
-            className="w-full rounded-xl border border-neutral-300 px-4 py-3 text-sm outline-none focus:border-neutral-900 transition-colors"
+            className="w-full rounded-xl border-2 px-4 py-3 text-sm outline-none transition-colors"
+            style={{ borderColor: "var(--color-line)", color: "var(--color-ink)" }}
+            onFocus={(e) => (e.currentTarget.style.borderColor = "var(--color-indigo)")}
+            onBlur={(e) => (e.currentTarget.style.borderColor = "var(--color-line)")}
           />
         </div>
 
         {state?.error && (
-          <p className="text-sm text-red-600">{state.error}</p>
+          <p className="text-sm font-medium" style={{ color: "var(--color-coral-dark)" }}>
+            {state.error}
+          </p>
         )}
 
         <button
           type="submit"
           disabled={pending}
-          className="w-full rounded-full bg-neutral-900 py-3 text-sm font-medium text-white hover:bg-neutral-800 transition-colors disabled:opacity-50"
+          className="w-full rounded-full py-3 text-sm font-bold text-white transition-colors disabled:opacity-50"
+          style={{ background: "var(--color-ink)" }}
         >
           {pending
             ? "処理中..."

@@ -36,11 +36,15 @@ export function MyDictionaryView({
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
             placeholder="自分の辞書から検索..."
-            className="flex-1 rounded-full border border-neutral-200 px-4 py-2.5 text-sm outline-none focus:border-neutral-900 transition-colors"
+            className="flex-1 rounded-full border-2 px-4 py-2.5 text-sm outline-none transition-colors"
+            style={{ borderColor: "var(--color-line)", color: "var(--color-ink)" }}
+            onFocus={(e) => (e.currentTarget.style.borderColor = "var(--color-indigo)")}
+            onBlur={(e) => (e.currentTarget.style.borderColor = "var(--color-line)")}
           />
           <button
             type="submit"
-            className="rounded-full bg-neutral-900 text-white px-5 py-2.5 text-sm font-medium"
+            className="rounded-full text-white px-5 py-2.5 text-sm font-bold"
+            style={{ background: "var(--color-ink)" }}
           >
             検索
           </button>
@@ -48,11 +52,13 @@ export function MyDictionaryView({
       </form>
 
       {isPending && (
-        <p className="text-center text-xs text-neutral-300 py-8">検索中...</p>
+        <p className="text-center text-xs py-8" style={{ color: "var(--color-slate-light)" }}>
+          検索中...
+        </p>
       )}
 
       {!isPending && posts.length === 0 && (
-        <p className="text-center text-sm text-neutral-400 py-16">
+        <p className="text-center text-sm py-16" style={{ color: "var(--color-slate)" }}>
           {keyword.trim()
             ? `「${keyword}」に一致する単語は見つかりませんでした`
             : "まだ単語を投稿していません。最初の単語を投稿してみましょう。"}

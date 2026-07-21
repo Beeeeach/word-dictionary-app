@@ -29,9 +29,12 @@ export function PostCard({
   const posterTags = post.post_emotion_tags?.map((t) => t.emotion_tags) ?? [];
 
   return (
-    <article className="rounded-2xl border border-neutral-200 bg-white p-5 space-y-3">
+    <article
+      className="rounded-2xl p-5 space-y-3"
+      style={{ background: "var(--color-paper-raised)", border: "1px solid var(--color-line)" }}
+    >
       {/* ヘッダー: 投稿者・時刻・非公開バッジ */}
-      <div className="flex items-center justify-between text-xs text-neutral-400">
+      <div className="flex items-center justify-between text-xs" style={{ color: "var(--color-slate-light)" }}>
         <div className="flex items-center gap-2">
           {post.users?.avatar_url ? (
             <Image
@@ -42,20 +45,31 @@ export function PostCard({
               className="rounded-full"
             />
           ) : (
-            <div className="w-5 h-5 rounded-full bg-neutral-200" />
+            <div
+              className="w-5 h-5 rounded-full"
+              style={{ background: "var(--color-line)" }}
+            />
           )}
-          <span className="text-neutral-600 font-medium">{authorName}</span>
+          <span className="font-bold" style={{ color: "var(--color-slate)" }}>
+            {authorName}
+          </span>
           <span>・{timeAgo(post.created_at)}</span>
         </div>
         {post.visibility === "private" && (
-          <span className="rounded-full bg-neutral-100 px-2 py-0.5 text-[11px] text-neutral-500">
+          <span
+            className="rounded-full px-2 py-0.5 text-[11px] font-medium"
+            style={{ background: "var(--color-line)", color: "var(--color-slate)" }}
+          >
             非公開
           </span>
         )}
       </div>
 
       {/* 単語（最も強調） */}
-      <h2 className="text-2xl font-bold text-neutral-900 leading-snug">
+      <h2
+        className="text-2xl font-extrabold leading-snug"
+        style={{ color: "var(--color-ink)" }}
+      >
         {post.word}
       </h2>
 
@@ -65,7 +79,8 @@ export function PostCard({
           {posterTags.map((tag) => (
             <span
               key={tag.id}
-              className="inline-flex items-center gap-1 rounded-full bg-orange-50 px-2.5 py-1 text-xs text-orange-700"
+              className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold"
+              style={{ background: "#FFF0EC", color: "var(--color-coral-dark)" }}
             >
               {tag.emoji} {tag.name}
             </span>
@@ -75,14 +90,17 @@ export function PostCard({
 
       {/* 意味（入力があれば表示） */}
       {post.meaning && (
-        <p className="text-sm text-neutral-700 whitespace-pre-wrap">
+        <p className="text-sm whitespace-pre-wrap" style={{ color: "var(--color-ink)" }}>
           {post.meaning}
         </p>
       )}
 
       {/* 出会った文脈（入力があれば表示） */}
       {post.context && (
-        <p className="text-xs text-neutral-400 whitespace-pre-wrap border-l-2 border-neutral-200 pl-3">
+        <p
+          className="text-xs whitespace-pre-wrap border-l-2 pl-3"
+          style={{ color: "var(--color-slate)", borderColor: "var(--color-line)" }}
+        >
           {post.context}
         </p>
       )}
@@ -109,7 +127,10 @@ export function PostCard({
       />
 
       {/* フッター: いいね・コメント */}
-      <div className="flex items-center gap-4 pt-2 border-t border-neutral-100">
+      <div
+        className="flex items-center gap-4 pt-2 border-t"
+        style={{ borderColor: "var(--color-line)" }}
+      >
         <div className="pt-2">
           <LikeButton
             postId={post.id}

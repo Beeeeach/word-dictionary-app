@@ -1,11 +1,11 @@
 {
-  "name": "みんなの言葉辞書",
-  "short_name": "言葉辞書",
+  "name": "DicDic - コトバを広げるSNS",
+  "short_name": "DicDic",
   "description": "面白い単語・びっくりした単語をみんなで投稿して育てる、言葉の辞書SNSアプリ",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#171717",
+  "background_color": "#fdfbf4",
+  "theme_color": "#1c1b29",
   "orientation": "portrait",
   "icons": [
     {

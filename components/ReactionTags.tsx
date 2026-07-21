@@ -82,11 +82,12 @@ export function ReactionTags({
             return (
               <span
                 key={tag.id}
-                className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs ${
+                className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-bold"
+                style={
                   mine
-                    ? "bg-blue-50 text-blue-700"
-                    : "bg-neutral-50 text-neutral-500"
-                }`}
+                    ? { background: "#EEF0FC", color: "var(--color-indigo-dark)" }
+                    : { background: "#F3F1E9", color: "var(--color-slate)" }
+                }
               >
                 {tag.emoji} {count}
               </span>
@@ -107,11 +108,22 @@ export function ReactionTags({
                 type="button"
                 onClick={() => handleToggle(tag.id)}
                 disabled={disabled}
-                className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs transition-colors ${
+                className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold border-2 transition-colors ${
+                  disabled ? "opacity-50 cursor-not-allowed" : ""
+                }`}
+                style={
                   mine
-                    ? "bg-blue-100 text-blue-700 border border-blue-300"
-                    : "bg-neutral-50 text-neutral-500 border border-neutral-200 hover:bg-neutral-100"
-                } ${disabled ? "opacity-50 cursor-not-allowed" : ""}`}
+                    ? {
+                        background: "#EEF0FC",
+                        color: "var(--color-indigo-dark)",
+                        borderColor: "var(--color-indigo)",
+                      }
+                    : {
+                        background: "var(--color-paper-raised)",
+                        color: "var(--color-slate)",
+                        borderColor: "var(--color-line)",
+                      }
+                }
               >
                 {tag.emoji} {tag.name}
                 {count > 0 && <span className="ml-0.5">{count}</span>}
@@ -126,7 +138,8 @@ export function ReactionTags({
           type="button"
           onClick={() => setExpanded(true)}
           disabled={disabled}
-          className="text-xs text-neutral-300 hover:text-neutral-500 transition-colors"
+          className="text-xs font-bold transition-colors"
+          style={{ color: "var(--color-slate-light)" }}
         >
           + 反応する
         </button>
