@@ -1,0 +1,18 @@
+name: Recalculate User Affinities
+
+# ユーザーごとの感情タグ嗜好・投稿者嗜好を1日1回再計算する。
+# 全ユーザー分の集計処理で比較的重いため、頻度を抑えて深夜(日本時間早朝)に実行。
+on:
+  schedule:
+    - cron: "0 18 * * *" # UTC 18:00 = 日本時間 翌 3:00
+  workflow_dispatch: {}
+
+jobs:
+  recalculate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call recalculate-affinities endpoint
+        run: |
+          curl -sf -X GET \
+            "${{ secrets.APP_URL }}/api/cron/recalculate-affinities" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"

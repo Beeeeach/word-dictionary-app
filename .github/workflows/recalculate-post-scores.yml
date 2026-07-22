@@ -1,0 +1,20 @@
+name: Recalculate Post Scores
+
+# 投稿ごとのbase_score(人気度×鮮度)を15分おきに再計算する。
+# GitHub Actionsのcronは5分刻みが最小単位で、実行が数分〜十数分
+# 遅延することもある(公式にドキュメントされた既知の挙動)ため、
+# 「だいたい15分ごと」という前提で運用する。
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch: {}
+
+jobs:
+  recalculate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call recalculate-scores endpoint
+        run: |
+          curl -sf -X GET \
+            "${{ secrets.APP_URL }}/api/cron/recalculate-scores" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"

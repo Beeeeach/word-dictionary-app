@@ -1,8 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 import type { EmotionTag, PostWithRelations } from "@/lib/types/database.types";
 import { getEmotionTags } from "@/lib/data/emotion-tags";
+import { getFollowingIds } from "@/lib/data/follows";
 
-export type FeedSort = "recommended" | "recent";
+export type FeedSort = "recommended" | "following";
 
 const PAGE_SIZE = 10;
 
@@ -14,43 +15,16 @@ const POST_SELECT = `
 `;
 
 /**
- * フィード用の投稿一覧をページ単位で取得する。
- * RLSにより、公開投稿 + 自分の非公開投稿のみが返る。
- *
- * sort:
- *  - "recent": 新着順（投稿日時の降順）。企画書7-4章の「フォロー中」タブに相当するが、
- *    フォロー機能自体は9章の「今後の検討事項」のためMVPでは新着順で代替する。
- *  - "recommended": いいね数優先、同数は新着順の簡易ロジック。
- *    本格的なアルゴリズムは9章の検討事項のため、まずは反応が多い投稿が
- *    埋もれない程度のシンプルな重み付けにとどめる。
+ * 取得済みの投稿データ(生のJOIN結果)に、いいね状態・反応タグの内訳を
+ * 付与する共通処理。おすすめ/フォロー中どちらのフィードからも呼ばれる。
  */
-export async function getFeedPosts(
-  currentUserId: string | null,
-  { sort, page }: { sort: FeedSort; page: number }
-): Promise<{ posts: PostWithRelations[]; hasMore: boolean }> {
+async function attachReactionData(
+  rawPosts: unknown[],
+  currentUserId: string | null
+): Promise<PostWithRelations[]> {
   const supabase = await createClient();
-  const from = page * PAGE_SIZE;
-  const to = from + PAGE_SIZE - 1;
+  const postIds = rawPosts.map((p) => (p as { id: string }).id);
 
-  let query = supabase.from("posts").select(POST_SELECT);
-
-  if (sort === "recommended") {
-    query = query
-      .order("like_count", { ascending: false })
-      .order("created_at", { ascending: false });
-  } else {
-    query = query.order("created_at", { ascending: false });
-  }
-
-  const { data, error } = await query.range(from, to);
-
-  if (error || !data) {
-    return { posts: [], hasMore: false };
-  }
-
-  const postIds = data.map((p) => (p as { id: string }).id);
-
-  // --- 自分のいいね状態 ---
   let likedPostIds = new Set<string>();
   if (currentUserId && postIds.length > 0) {
     const { data: likes } = await supabase
@@ -61,11 +35,7 @@ export async function getFeedPosts(
     likedPostIds = new Set((likes ?? []).map((l) => l.post_id));
   }
 
-  // --- 反応タグ（閲覧者による反応）の内訳と、自分の反応状態 ---
-  const reactionSummaryByPost = new Map<
-    string,
-    Map<number, number>
-  >();
+  const reactionSummaryByPost = new Map<string, Map<number, number>>();
   const myReactionsByPost = new Map<string, Set<number>>();
 
   if (postIds.length > 0) {
@@ -96,7 +66,7 @@ export async function getFeedPosts(
     emotionTags.map((t) => [t.id, t])
   );
 
-  const posts = (data as unknown as PostWithRelations[]).map((post) => {
+  return (rawPosts as PostWithRelations[]).map((post) => {
     const tagCounts = reactionSummaryByPost.get(post.id);
     const reaction_summary = tagCounts
       ? Array.from(tagCounts.entries())
@@ -114,7 +84,104 @@ export async function getFeedPosts(
       my_reaction_tag_ids: Array.from(myReactionsByPost.get(post.id) ?? []),
     };
   });
+}
 
+/**
+ * フィード用の投稿一覧をページ単位で取得する。
+ * RLSにより、公開投稿 + 自分の非公開投稿のみが返る。
+ *
+ * sort:
+ *  - "recommended": いいね数優先、同数は新着順の簡易ロジック。
+ *    本格的なパーソナライズアルゴリズムは将来の拡張事項。
+ *  - "following": 自分がフォローしているユーザーの投稿のみを新着順で表示。
+ *    フォローしている人がいない場合は空になる(その旨はUI側でメッセージ表示)。
+ */
+export async function getFeedPosts(
+  currentUserId: string | null,
+  { sort, page }: { sort: FeedSort; page: number }
+): Promise<{ posts: PostWithRelations[]; hasMore: boolean }> {
+  const supabase = await createClient();
+  const from = page * PAGE_SIZE;
+  const to = from + PAGE_SIZE - 1;
+
+  if (sort === "following") {
+    if (!currentUserId) {
+      return { posts: [], hasMore: false };
+    }
+    const followingIds = await getFollowingIds(currentUserId);
+    if (followingIds.length === 0) {
+      return { posts: [], hasMore: false };
+    }
+
+    const { data, error } = await supabase
+      .from("posts")
+      .select(POST_SELECT)
+      .in("user_id", followingIds)
+      .order("created_at", { ascending: false })
+      .range(from, to);
+
+    if (error || !data) {
+      return { posts: [], hasMore: false };
+    }
+
+    const posts = await attachReactionData(data, currentUserId);
+    return { posts, hasMore: data.length === PAGE_SIZE };
+  }
+
+  // "recommended": 事前計算済みスコア(post_scores)とユーザーの好み(affinity)を
+  // 掛け合わせた最終スコア順に投稿を取得する。DB側の関数(get_personalized_feed)で
+  // 完結させることで、投稿数が増えてもアプリ側の負荷を増やさない設計にしている。
+  if (currentUserId) {
+    const { data: rankedIds, error: rpcError } = await supabase.rpc(
+      "get_personalized_feed",
+      {
+        viewer_id: currentUserId,
+        page_size: PAGE_SIZE,
+        page_offset: from,
+      }
+    );
+
+    if (!rpcError && rankedIds) {
+      const ids = (rankedIds as { post_id: string }[]).map((r) => r.post_id);
+      if (ids.length === 0) {
+        return { posts: [], hasMore: false };
+      }
+
+      const { data, error } = await supabase
+        .from("posts")
+        .select(POST_SELECT)
+        .in("id", ids);
+
+      if (!error && data) {
+        // RPCが返した順序(スコア順)を保ったまま並べ替える
+        // (in句のクエリ結果は順序が保証されないため)
+        const postById = new Map(
+          (data as unknown as { id: string }[]).map((p) => [p.id, p])
+        );
+        const orderedRaw = ids
+          .map((id) => postById.get(id))
+          .filter((p): p is NonNullable<typeof p> => p !== undefined);
+
+        const posts = await attachReactionData(orderedRaw, currentUserId);
+        return { posts, hasMore: ids.length === PAGE_SIZE };
+      }
+    }
+    // RPC失敗時は下のフォールバック(人気順)に進む
+  }
+
+  // フォールバック: 未ログイン、またはRPC失敗時は素直な人気順で表示
+  const { data, error } = await supabase
+    .from("posts")
+    .select(POST_SELECT)
+    .order("like_count", { ascending: false })
+    .order("created_at", { ascending: false })
+    .range(from, to);
+
+  if (error || !data) {
+    return { posts: [], hasMore: false };
+  }
+
+  const posts = await attachReactionData(data, currentUserId);
   return { posts, hasMore: data.length === PAGE_SIZE };
 }
 

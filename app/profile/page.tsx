@@ -1,8 +1,10 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { signOut } from "@/lib/actions/auth";
 import { BottomTabBar } from "@/components/BottomTabBar";
 import { DisplayNameForm } from "./DisplayNameForm";
+import { AvatarForm } from "./AvatarForm";
 
 export default async function ProfilePage() {
   const supabase = await createClient();
@@ -33,6 +35,13 @@ export default async function ProfilePage() {
         >
           プロフィール
         </h1>
+
+        <div
+          className="rounded-2xl p-5 mb-4"
+          style={{ background: "var(--color-paper-raised)", border: "1px solid var(--color-line)" }}
+        >
+          <AvatarForm currentAvatarUrl={profile?.avatar_url ?? null} />
+        </div>
 
         <div
           className="rounded-2xl p-5 text-sm space-y-3 mb-4"
@@ -70,6 +79,16 @@ export default async function ProfilePage() {
         >
           <DisplayNameForm currentDisplayName={profile?.display_name ?? ""} />
         </div>
+
+        {profile?.username && (
+          <Link
+            href={`/u/${profile.username}`}
+            className="block w-full text-center rounded-full py-3 text-sm font-bold border-2 mb-3 transition-colors hover:bg-black/[0.03]"
+            style={{ borderColor: "var(--color-line)", color: "var(--color-ink)" }}
+          >
+            公開プロフィールを見る
+          </Link>
+        )}
 
         <form action={signOut}>
           <button

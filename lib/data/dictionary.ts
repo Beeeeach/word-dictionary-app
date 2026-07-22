@@ -176,3 +176,92 @@ export async function getMyDictionaryStats(userId: string): Promise<{
     categoryCount,
   };
 }
+
+export interface PublicUserProfile {
+  id: string;
+  username: string;
+  display_name: string | null;
+  avatar_url: string | null;
+}
+
+/** usernameから公開プロフィール情報を取得する（他人の辞書ページ用） */
+export async function getUserByUsername(
+  username: string
+): Promise<PublicUserProfile | null> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("users")
+    .select("id, username, display_name, avatar_url")
+    .eq("username", username)
+    .maybeSingle<PublicUserProfile>();
+
+  return data ?? null;
+}
+
+/**
+ * 対象ユーザーの公開投稿一覧を取得する（他人の辞書ページ用）。
+ * RLS上、他人が閲覧できるのは元々公開投稿のみだが、
+ * ここでも明示的に visibility = 'public' で絞り、意図を明確にしている。
+ */
+export async function getPublicPostsByUser(
+  targetUserId: string,
+  currentUserId: string | null
+): Promise<PostWithRelations[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("posts")
+    .select(POST_SELECT)
+    .eq("user_id", targetUserId)
+    .eq("visibility", "public")
+    .order("created_at", { ascending: false });
+
+  if (error || !data) return [];
+  return enrichPosts(data, currentUserId);
+}
+
+/** 対象ユーザーの公開投稿に関する統計サマリー（他人の辞書ページ用） */
+export async function getPublicDictionaryStats(targetUserId: string): Promise<{
+  wordCount: number;
+  reactionCount: number;
+  categoryCount: number;
+}> {
+  const supabase = await createClient();
+
+  const { data: publicPostIdsRaw, count: wordCount } = await supabase
+    .from("posts")
+    .select("id", { count: "exact" })
+    .eq("user_id", targetUserId)
+    .eq("visibility", "public");
+
+  const postIds = (publicPostIdsRaw ?? []).map((p) => p.id);
+
+  let likeTotal = 0;
+  let reactionTotal = 0;
+  let categoryCount = 0;
+
+  if (postIds.length > 0) {
+    const { count: likeCount } = await supabase
+      .from("likes")
+      .select("post_id", { count: "exact", head: true })
+      .in("post_id", postIds);
+    likeTotal = likeCount ?? 0;
+
+    const { count: reactionCount } = await supabase
+      .from("reaction_tags")
+      .select("id", { count: "exact", head: true })
+      .in("post_id", postIds);
+    reactionTotal = reactionCount ?? 0;
+
+    const { data: postTags } = await supabase
+      .from("post_emotion_tags")
+      .select("emotion_tag_id")
+      .in("post_id", postIds);
+    categoryCount = new Set((postTags ?? []).map((t) => t.emotion_tag_id)).size;
+  }
+
+  return {
+    wordCount: wordCount ?? 0,
+    reactionCount: likeTotal + reactionTotal,
+    categoryCount,
+  };
+}

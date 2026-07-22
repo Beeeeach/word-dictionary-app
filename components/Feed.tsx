@@ -71,7 +71,7 @@ export function Feed({
       <TabBar
         tabs={[
           { key: "recommended", label: "おすすめ" },
-          { key: "recent", label: "フォロー中" },
+          { key: "following", label: "フォロー中" },
         ]}
         active={sort}
         onChange={(key) => handleSortChange(key as FeedSort)}
@@ -79,7 +79,9 @@ export function Feed({
 
       {posts.length === 0 && !loading ? (
         <p className="text-center text-sm py-16" style={{ color: "var(--color-slate)" }}>
-          まだ投稿がありません。最初の単語を投稿してみましょう。
+          {sort === "following"
+            ? "フォロー中のユーザーの投稿がまだありません。気になる人をフォローしてみましょう。"
+            : "まだ投稿がありません。最初の単語を投稿してみましょう。"}
         </p>
       ) : (
         <div className="space-y-4">
