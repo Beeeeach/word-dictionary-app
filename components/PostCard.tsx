@@ -4,6 +4,7 @@ import type { EmotionTag, PostWithRelations } from "@/lib/types/database.types";
 import { LikeButton } from "@/components/LikeButton";
 import { ReactionTags } from "@/components/ReactionTags";
 import { CommentSection } from "@/components/CommentSection";
+import { PollCard } from "@/components/PollCard";
 
 function timeAgo(dateString: string): string {
   const diffMs = Date.now() - new Date(dateString).getTime();
@@ -69,56 +70,70 @@ export function PostCard({
         )}
       </div>
 
-      {/* 単語（最も強調） */}
+      {/* 単語（またはpoll_typeが投票の場合は投票タイトル） */}
       <h2
         className="text-2xl font-extrabold leading-snug"
         style={{ color: "var(--color-ink)" }}
       >
+        {post.post_type === "poll" && "🗳️ "}
         {post.word}
       </h2>
 
-      {/* 投稿者が付けた感情タグ */}
-      {posterTags.length > 0 && (
-        <div className="flex flex-wrap gap-1.5">
-          {posterTags.map((tag) => (
-            <span
-              key={tag.id}
-              className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold"
-              style={{ background: "#FFF0EC", color: "var(--color-coral-dark)" }}
+      {post.post_type === "poll" && post.poll ? (
+        <PollCard
+          postId={post.id}
+          closesAt={post.poll.closesAt}
+          options={post.poll.options}
+          myVoteOptionId={post.poll.myVoteOptionId}
+          totalVotes={post.poll.totalVotes}
+          disabled={!currentUserId}
+        />
+      ) : (
+        <>
+          {/* 投稿者が付けた感情タグ */}
+          {posterTags.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {posterTags.map((tag) => (
+                <span
+                  key={tag.id}
+                  className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold"
+                  style={{ background: "#FFF0EC", color: "var(--color-coral-dark)" }}
+                >
+                  {tag.emoji} {tag.name}
+                </span>
+              ))}
+            </div>
+          )}
+
+          {/* 意味（入力があれば表示） */}
+          {post.meaning && (
+            <p className="text-sm whitespace-pre-wrap" style={{ color: "var(--color-ink)" }}>
+              {post.meaning}
+            </p>
+          )}
+
+          {/* 出会った文脈（入力があれば表示） */}
+          {post.context && (
+            <p
+              className="text-xs whitespace-pre-wrap border-l-2 pl-3"
+              style={{ color: "var(--color-slate)", borderColor: "var(--color-line)" }}
             >
-              {tag.emoji} {tag.name}
-            </span>
-          ))}
-        </div>
-      )}
+              {post.context}
+            </p>
+          )}
 
-      {/* 意味（入力があれば表示） */}
-      {post.meaning && (
-        <p className="text-sm whitespace-pre-wrap" style={{ color: "var(--color-ink)" }}>
-          {post.meaning}
-        </p>
-      )}
-
-      {/* 出会った文脈（入力があれば表示） */}
-      {post.context && (
-        <p
-          className="text-xs whitespace-pre-wrap border-l-2 pl-3"
-          style={{ color: "var(--color-slate)", borderColor: "var(--color-line)" }}
-        >
-          {post.context}
-        </p>
-      )}
-
-      {/* 写真（入力があれば表示） */}
-      {post.photo_url && (
-        <div className="rounded-xl overflow-hidden">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={post.photo_url}
-            alt={post.word}
-            className="w-full max-h-96 object-cover"
-          />
-        </div>
+          {/* 写真（入力があれば表示） */}
+          {post.photo_url && (
+            <div className="rounded-xl overflow-hidden">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={post.photo_url}
+                alt={post.word}
+                className="w-full max-h-96 object-cover"
+              />
+            </div>
+          )}
+        </>
       )}
 
       {/* 閲覧者による反応タグ */}

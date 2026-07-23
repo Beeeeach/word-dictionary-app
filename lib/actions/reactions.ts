@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { createNotification } from "@/lib/notifications/create";
 
 export type ToggleReactionResult = { reacted: boolean; error?: string };
 
@@ -49,6 +50,22 @@ export async function toggleReaction(
     });
 
     if (error) return { reacted: false, error: "反応に失敗しました" };
+
+    const { data: post } = await supabase
+      .from("posts")
+      .select("user_id")
+      .eq("id", postId)
+      .single<{ user_id: string }>();
+
+    if (post) {
+      await createNotification({
+        userId: post.user_id,
+        actorId: user.id,
+        type: "reaction",
+        postId,
+      });
+    }
+
     revalidatePath("/");
     return { reacted: true };
   }

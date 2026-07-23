@@ -1,5 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import Image from "next/image";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import {
   getUserByUsername,
@@ -55,7 +56,7 @@ export default async function PublicProfilePage({
     <div className="flex-1 flex flex-col" style={{ background: "var(--color-paper)" }}>
       <main className="flex-1 max-w-lg mx-auto w-full px-4 py-6">
         {/* プロフィールヘッダー */}
-        <div className="flex items-center gap-4 mb-4">
+        <div className="flex items-center gap-4 mb-3">
           <div
             className="w-16 h-16 rounded-full overflow-hidden shrink-0 flex items-center justify-center"
             style={{ background: "var(--color-line)" }}
@@ -88,20 +89,34 @@ export default async function PublicProfilePage({
           )}
         </div>
 
-        {/* フォロワー数・フォロー中数 */}
+        {/* 自己紹介 */}
+        {profile.bio && (
+          <p
+            className="text-sm whitespace-pre-wrap mb-3"
+            style={{ color: "var(--color-ink)" }}
+          >
+            {profile.bio}
+          </p>
+        )}
+
+        {/* フォロワー数・フォロー中数（タップで一覧へ） */}
         <div className="flex gap-4 mb-6 text-sm">
-          <span style={{ color: "var(--color-slate)" }}>
-            <span className="font-bold" style={{ color: "var(--color-ink)" }}>
-              {followCounts.followerCount}
-            </span>{" "}
-            フォロワー
-          </span>
-          <span style={{ color: "var(--color-slate)" }}>
-            <span className="font-bold" style={{ color: "var(--color-ink)" }}>
-              {followCounts.followingCount}
-            </span>{" "}
-            フォロー中
-          </span>
+          <Link href={`/u/${profile.username}/followers`}>
+            <span style={{ color: "var(--color-slate)" }}>
+              <span className="font-bold" style={{ color: "var(--color-ink)" }}>
+                {followCounts.followerCount}
+              </span>{" "}
+              フォロワー
+            </span>
+          </Link>
+          <Link href={`/u/${profile.username}/following`}>
+            <span style={{ color: "var(--color-slate)" }}>
+              <span className="font-bold" style={{ color: "var(--color-ink)" }}>
+                {followCounts.followingCount}
+              </span>{" "}
+              フォロー中
+            </span>
+          </Link>
         </div>
 
         <DictionaryStats

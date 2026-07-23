@@ -101,7 +101,7 @@ export function PostForm({ emotionTags }: { emotionTags: EmotionTag[] }) {
             className="block text-xs font-bold mb-1.5"
             style={{ color: "var(--color-slate)" }}
           >
-            この単語との出会いは？（任意・複数選択可）
+            この単語の印象は？（任意・複数選択可）
           </span>
           <div className="flex flex-wrap gap-2">
             {emotionTags.map((tag) => {

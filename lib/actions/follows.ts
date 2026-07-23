@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { sendPushNotification } from "@/lib/notifications/send";
+import { createNotification } from "@/lib/notifications/create";
 
 export type ToggleFollowResult = { following: boolean; error?: string };
 
@@ -56,6 +57,12 @@ export async function toggleFollow(followeeId: string): Promise<ToggleFollowResu
       .eq("id", user.id)
       .single<{ display_name: string | null; username: string }>();
     const followerName = follower?.display_name || follower?.username || "誰か";
+
+    await createNotification({
+      userId: followeeId,
+      actorId: user.id,
+      type: "follow",
+    });
 
     await sendPushNotification({
       toUserId: followeeId,

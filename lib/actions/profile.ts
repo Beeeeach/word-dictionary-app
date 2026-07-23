@@ -48,6 +48,42 @@ export async function updateDisplayName(
   return { success: true };
 }
 
+const MAX_BIO_LENGTH = 160;
+
+/** ユーザーの自己紹介文を更新する */
+export async function updateBio(
+  _prevState: UpdateProfileResult,
+  formData: FormData
+): Promise<UpdateProfileResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "ログインが必要です" };
+  }
+
+  const bio = String(formData.get("bio") ?? "").trim();
+
+  if (bio.length > MAX_BIO_LENGTH) {
+    return { error: `自己紹介は${MAX_BIO_LENGTH}文字以内で入力してください` };
+  }
+
+  const { error } = await supabase
+    .from("users")
+    .update({ bio: bio || null })
+    .eq("id", user.id);
+
+  if (error) {
+    return { error: "自己紹介の更新に失敗しました" };
+  }
+
+  revalidatePath("/");
+  revalidatePath("/profile");
+  return { success: true };
+}
+
 const MAX_AVATAR_SIZE = 2 * 1024 * 1024; // 2MB（Storageバケット側の制限と合わせる）
 const ALLOWED_AVATAR_TYPES = ["image/jpeg", "image/png", "image/webp"];
 

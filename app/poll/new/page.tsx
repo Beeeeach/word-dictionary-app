@@ -1,10 +1,9 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { getEmotionTags } from "@/lib/data/emotion-tags";
-import { PostForm } from "./PostForm";
+import { PollForm } from "./PollForm";
 
-export default async function NewPostPage() {
+export default async function NewPollPage() {
   const supabase = await createClient();
   const {
     data: { user },
@@ -14,8 +13,6 @@ export default async function NewPostPage() {
     redirect("/login");
   }
 
-  const emotionTags = await getEmotionTags();
-
   return (
     <main
       className="flex-1 px-4 py-6 max-w-lg mx-auto w-full"
@@ -23,29 +20,19 @@ export default async function NewPostPage() {
     >
       <div className="flex items-center justify-between mb-6">
         <Link
-          href="/"
+          href="/post/new"
           className="text-sm font-bold"
           style={{ color: "var(--color-slate)" }}
         >
           ← もどる
         </Link>
         <h1 className="text-sm font-bold" style={{ color: "var(--color-ink)" }}>
-          新しい単語を投稿
+          投票を作成
         </h1>
         <div className="w-10" />
       </div>
 
-      <PostForm emotionTags={emotionTags} />
-
-      <div className="text-center mt-6">
-        <Link
-          href="/poll/new"
-          className="text-sm font-bold underline underline-offset-2"
-          style={{ color: "var(--color-indigo)" }}
-        >
-          🗳️ 単語ではなく投票を作りたい
-        </Link>
-      </div>
+      <PollForm />
     </main>
   );
 }

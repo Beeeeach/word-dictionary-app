@@ -2,21 +2,22 @@ import { createClient } from "@/lib/supabase/server";
 import type { EmotionTag, PostWithRelations } from "@/lib/types/database.types";
 import { getEmotionTags } from "@/lib/data/emotion-tags";
 import { getFollowingIds } from "@/lib/data/follows";
+import { attachPollData } from "@/lib/data/polls";
 
 export type FeedSort = "recommended" | "following";
 
 const PAGE_SIZE = 10;
 
 const POST_SELECT = `
-  id, user_id, word, meaning, context, photo_url, visibility,
+  id, user_id, word, meaning, context, photo_url, visibility, post_type,
   like_count, comment_count, created_at, updated_at,
   users:user_id ( id, username, display_name, avatar_url ),
   post_emotion_tags ( emotion_tags ( id, name, emoji, sort_order ) )
 `;
 
 /**
- * 取得済みの投稿データ(生のJOIN結果)に、いいね状態・反応タグの内訳を
- * 付与する共通処理。おすすめ/フォロー中どちらのフィードからも呼ばれる。
+ * 取得済みの投稿データ(生のJOIN結果)に、いいね状態・反応タグの内訳・
+ * (投票投稿の場合は)投票情報を付与する共通処理。
  */
 async function attachReactionData(
   rawPosts: unknown[],
@@ -66,7 +67,7 @@ async function attachReactionData(
     emotionTags.map((t) => [t.id, t])
   );
 
-  return (rawPosts as PostWithRelations[]).map((post) => {
+  const posts = (rawPosts as PostWithRelations[]).map((post) => {
     const tagCounts = reactionSummaryByPost.get(post.id);
     const reaction_summary = tagCounts
       ? Array.from(tagCounts.entries())
@@ -84,6 +85,8 @@ async function attachReactionData(
       my_reaction_tag_ids: Array.from(myReactionsByPost.get(post.id) ?? []),
     };
   });
+
+  return attachPollData(posts, currentUserId);
 }
 
 /**

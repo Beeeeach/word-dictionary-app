@@ -21,6 +21,7 @@ export interface Database {
           username: string;
           display_name: string | null;
           avatar_url: string | null;
+          bio: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -29,11 +30,13 @@ export interface Database {
           username: string;
           display_name?: string | null;
           avatar_url?: string | null;
+          bio?: string | null;
         };
         Update: {
           username?: string;
           display_name?: string | null;
           avatar_url?: string | null;
+          bio?: string | null;
         };
         Relationships: [];
       };
@@ -46,6 +49,7 @@ export interface Database {
           context: string | null;
           photo_url: string | null;
           visibility: Visibility;
+          post_type: "word" | "poll";
           like_count: number;
           comment_count: number;
           created_at: string;
@@ -59,6 +63,7 @@ export interface Database {
           context?: string | null;
           photo_url?: string | null;
           visibility?: Visibility;
+          post_type?: "word" | "poll";
         };
         Update: {
           word?: string;
@@ -66,6 +71,7 @@ export interface Database {
           context?: string | null;
           photo_url?: string | null;
           visibility?: Visibility;
+          post_type?: "word" | "poll";
         };
         Relationships: [
           {
@@ -253,6 +259,125 @@ export interface Database {
           },
         ];
       };
+      notifications: {
+        Row: {
+          id: string;
+          user_id: string;
+          actor_id: string;
+          type: "like" | "reaction" | "comment" | "follow";
+          post_id: string | null;
+          is_read: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          actor_id: string;
+          type: "like" | "reaction" | "comment" | "follow";
+          post_id?: string | null;
+          is_read?: boolean;
+        };
+        Update: {
+          is_read?: boolean;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "notifications_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "notifications_actor_id_fkey";
+            columns: ["actor_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "notifications_post_id_fkey";
+            columns: ["post_id"];
+            isOneToOne: false;
+            referencedRelation: "posts";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      poll_options: {
+        Row: {
+          id: string;
+          post_id: string;
+          label: string;
+          sort_order: number;
+        };
+        Insert: {
+          id?: string;
+          post_id: string;
+          label: string;
+          sort_order?: number;
+        };
+        Update: Record<string, never>;
+        Relationships: [
+          {
+            foreignKeyName: "poll_options_post_id_fkey";
+            columns: ["post_id"];
+            isOneToOne: false;
+            referencedRelation: "posts";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      poll_settings: {
+        Row: {
+          post_id: string;
+          closes_at: string;
+        };
+        Insert: {
+          post_id: string;
+          closes_at: string;
+        };
+        Update: Record<string, never>;
+        Relationships: [
+          {
+            foreignKeyName: "poll_settings_post_id_fkey";
+            columns: ["post_id"];
+            isOneToOne: true;
+            referencedRelation: "posts";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      poll_votes: {
+        Row: {
+          post_id: string;
+          user_id: string;
+          option_id: string;
+          created_at: string;
+        };
+        Insert: {
+          post_id: string;
+          user_id: string;
+          option_id: string;
+        };
+        Update: Record<string, never>;
+        Relationships: [
+          {
+            foreignKeyName: "poll_votes_post_id_fkey";
+            columns: ["post_id"];
+            isOneToOne: false;
+            referencedRelation: "posts";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "poll_votes_option_id_fkey";
+            columns: ["option_id"];
+            isOneToOne: false;
+            referencedRelation: "poll_options";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -275,6 +400,10 @@ export interface Database {
         Args: Record<string, never>;
         Returns: undefined;
       };
+      cleanup_old_notifications: {
+        Args: Record<string, never>;
+        Returns: undefined;
+      };
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
@@ -287,6 +416,14 @@ export type UserProfile = Database["public"]["Tables"]["users"]["Row"];
 export type EmotionTag = Database["public"]["Tables"]["emotion_tags"]["Row"];
 export type Comment = Database["public"]["Tables"]["comments"]["Row"];
 
+/** 投票の選択肢＋得票数（結果表示・投票UI共通で使う） */
+export interface PollOptionWithVotes {
+  id: string;
+  label: string;
+  sort_order: number;
+  vote_count: number;
+}
+
 /** フィード表示用: 投稿者情報・感情タグ・自分のいいね状態を含む拡張型 */
 export interface PostWithRelations extends Post {
   users: Pick<UserProfile, "id" | "username" | "display_name" | "avatar_url">;
@@ -296,4 +433,11 @@ export interface PostWithRelations extends Post {
   reaction_summary?: { emotion_tag: EmotionTag; count: number }[];
   /** 自分が既に反応済みの感情タグID一覧 */
   my_reaction_tag_ids?: number[];
+  /** post_type = 'poll' の場合のみ入る投票情報 */
+  poll?: {
+    closesAt: string;
+    options: PollOptionWithVotes[];
+    myVoteOptionId: string | null;
+    totalVotes: number;
+  };
 }

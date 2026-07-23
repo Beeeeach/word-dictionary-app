@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { sendPushNotification } from "@/lib/notifications/send";
+import { createNotification } from "@/lib/notifications/create";
 
 export type AddCommentResult = { error?: string } | undefined;
 
@@ -54,6 +55,13 @@ export async function addComment(
       .single<{ display_name: string | null; username: string }>();
     const commenterName =
       commenter?.display_name || commenter?.username || "誰か";
+
+    await createNotification({
+      userId: post.user_id,
+      actorId: user.id,
+      type: "comment",
+      postId,
+    });
 
     await sendPushNotification({
       toUserId: post.user_id,

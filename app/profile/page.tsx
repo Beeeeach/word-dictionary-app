@@ -2,9 +2,11 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { signOut } from "@/lib/actions/auth";
+import { getFollowCounts } from "@/lib/data/follows";
 import { BottomTabBar } from "@/components/BottomTabBar";
 import { DisplayNameForm } from "./DisplayNameForm";
 import { AvatarForm } from "./AvatarForm";
+import { BioForm } from "./BioForm";
 
 export default async function ProfilePage() {
   const supabase = await createClient();
@@ -16,15 +18,19 @@ export default async function ProfilePage() {
     redirect("/login");
   }
 
-  const { data: profile } = await supabase
-    .from("users")
-    .select("username, display_name, avatar_url")
-    .eq("id", user.id)
-    .single<{
-      username: string;
-      display_name: string | null;
-      avatar_url: string | null;
-    }>();
+  const [{ data: profile }, followCounts] = await Promise.all([
+    supabase
+      .from("users")
+      .select("username, display_name, avatar_url, bio")
+      .eq("id", user.id)
+      .single<{
+        username: string;
+        display_name: string | null;
+        avatar_url: string | null;
+        bio: string | null;
+      }>(),
+    getFollowCounts(user.id),
+  ]);
 
   return (
     <div className="flex-1 flex flex-col" style={{ background: "var(--color-paper)" }}>
@@ -42,6 +48,28 @@ export default async function ProfilePage() {
         >
           <AvatarForm currentAvatarUrl={profile?.avatar_url ?? null} />
         </div>
+
+        {/* フォロワー数・フォロー中数（タップで一覧へ） */}
+        {profile?.username && (
+          <div className="flex gap-4 mb-4 text-sm px-1">
+            <Link href={`/u/${profile.username}/followers`}>
+              <span style={{ color: "var(--color-slate)" }}>
+                <span className="font-bold" style={{ color: "var(--color-ink)" }}>
+                  {followCounts.followerCount}
+                </span>{" "}
+                フォロワー
+              </span>
+            </Link>
+            <Link href={`/u/${profile.username}/following`}>
+              <span style={{ color: "var(--color-slate)" }}>
+                <span className="font-bold" style={{ color: "var(--color-ink)" }}>
+                  {followCounts.followingCount}
+                </span>{" "}
+                フォロー中
+              </span>
+            </Link>
+          </div>
+        )}
 
         <div
           className="rounded-2xl p-5 text-sm space-y-3 mb-4"
@@ -74,10 +102,17 @@ export default async function ProfilePage() {
         </div>
 
         <div
-          className="rounded-2xl p-5 mb-6"
+          className="rounded-2xl p-5 mb-4"
           style={{ background: "var(--color-paper-raised)", border: "1px solid var(--color-line)" }}
         >
           <DisplayNameForm currentDisplayName={profile?.display_name ?? ""} />
+        </div>
+
+        <div
+          className="rounded-2xl p-5 mb-6"
+          style={{ background: "var(--color-paper-raised)", border: "1px solid var(--color-line)" }}
+        >
+          <BioForm currentBio={profile?.bio ?? ""} />
         </div>
 
         {profile?.username && (

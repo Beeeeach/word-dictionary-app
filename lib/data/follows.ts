@@ -51,3 +51,40 @@ export async function getFollowingIds(userId: string): Promise<string[]> {
 
   return (data ?? []).map((f) => f.followee_id);
 }
+
+export interface FollowListUser {
+  id: string;
+  username: string;
+  display_name: string | null;
+  avatar_url: string | null;
+}
+
+/** 対象ユーザーのフォロワー一覧（プロフィール情報付き） */
+export async function getFollowers(targetUserId: string): Promise<FollowListUser[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("follows")
+    .select("users:follower_id ( id, username, display_name, avatar_url )")
+    .eq("followee_id", targetUserId)
+    .order("created_at", { ascending: false });
+
+  return ((data ?? []) as unknown as { users: FollowListUser }[]).map(
+    (row) => row.users
+  );
+}
+
+/** 対象ユーザーがフォロー中のユーザー一覧（プロフィール情報付き） */
+export async function getFollowingUsers(
+  targetUserId: string
+): Promise<FollowListUser[]> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("follows")
+    .select("users:followee_id ( id, username, display_name, avatar_url )")
+    .eq("follower_id", targetUserId)
+    .order("created_at", { ascending: false });
+
+  return ((data ?? []) as unknown as { users: FollowListUser }[]).map(
+    (row) => row.users
+  );
+}

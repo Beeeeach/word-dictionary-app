@@ -1,16 +1,18 @@
 import { createClient } from "@/lib/supabase/server";
 import type { EmotionTag, PostWithRelations } from "@/lib/types/database.types";
 import { getEmotionTags } from "@/lib/data/emotion-tags";
+import { attachPollData } from "@/lib/data/polls";
 
 const POST_SELECT = `
-  id, user_id, word, meaning, context, photo_url, visibility,
+  id, user_id, word, meaning, context, photo_url, visibility, post_type,
   like_count, comment_count, created_at, updated_at,
   users:user_id ( id, username, display_name, avatar_url ),
   post_emotion_tags ( emotion_tags ( id, name, emoji, sort_order ) )
 `;
 
 /**
- * 投稿データに反応タグの内訳・自分のいいね/反応状態を付与する共通処理。
+ * 投稿データに反応タグの内訳・自分のいいね/反応状態・(投票投稿の場合は)
+ * 投票情報を付与する共通処理。
  * lib/data/posts.ts の getFeedPosts と同じロジックを、検索・自分の辞書ページでも使う。
  */
 async function enrichPosts(
@@ -61,7 +63,7 @@ async function enrichPosts(
     emotionTags.map((t) => [t.id, t])
   );
 
-  return (rawPosts as PostWithRelations[]).map((post) => {
+  const posts = (rawPosts as PostWithRelations[]).map((post) => {
     const tagCounts = reactionSummaryByPost.get(post.id);
     const reaction_summary = tagCounts
       ? Array.from(tagCounts.entries())
@@ -79,6 +81,8 @@ async function enrichPosts(
       my_reaction_tag_ids: Array.from(myReactionsByPost.get(post.id) ?? []),
     };
   });
+
+  return attachPollData(posts, currentUserId);
 }
 
 /**
@@ -182,6 +186,7 @@ export interface PublicUserProfile {
   username: string;
   display_name: string | null;
   avatar_url: string | null;
+  bio: string | null;
 }
 
 /** usernameから公開プロフィール情報を取得する（他人の辞書ページ用） */
@@ -191,7 +196,7 @@ export async function getUserByUsername(
   const supabase = await createClient();
   const { data } = await supabase
     .from("users")
-    .select("id, username, display_name, avatar_url")
+    .select("id, username, display_name, avatar_url, bio")
     .eq("username", username)
     .maybeSingle<PublicUserProfile>();
 

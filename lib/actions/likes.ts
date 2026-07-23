@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { sendPushNotification } from "@/lib/notifications/send";
+import { createNotification } from "@/lib/notifications/create";
 
 export type ToggleLikeResult = { liked: boolean; error?: string };
 
@@ -61,6 +62,13 @@ export async function toggleLike(postId: string): Promise<ToggleLikeResult> {
         .eq("id", user.id)
         .single<{ display_name: string | null; username: string }>();
       const likerName = liker?.display_name || liker?.username || "誰か";
+
+      await createNotification({
+        userId: post.user_id,
+        actorId: user.id,
+        type: "like",
+        postId,
+      });
 
       await sendPushNotification({
         toUserId: post.user_id,
