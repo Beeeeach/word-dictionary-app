@@ -133,6 +133,16 @@ export function PostCard({
               />
             </div>
           )}
+
+          {/* ひとこと自由記述（入力があれば表示） */}
+          {post.note && (
+            <p
+              className="text-sm whitespace-pre-wrap rounded-xl px-3 py-2"
+              style={{ background: "#F3F1E9", color: "var(--color-ink)" }}
+            >
+              {post.note}
+            </p>
+          )}
         </>
       )}
 

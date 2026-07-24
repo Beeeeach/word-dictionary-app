@@ -9,7 +9,7 @@ export type FeedSort = "recommended" | "following";
 const PAGE_SIZE = 10;
 
 const POST_SELECT = `
-  id, user_id, word, meaning, context, photo_url, visibility, post_type,
+  id, user_id, word, meaning, context, photo_url, note, visibility, post_type,
   like_count, comment_count, created_at, updated_at,
   users:user_id ( id, username, display_name, avatar_url ),
   post_emotion_tags ( emotion_tags ( id, name, emoji, sort_order ) )
@@ -18,6 +18,11 @@ const POST_SELECT = `
 /**
  * 取得済みの投稿データ(生のJOIN結果)に、いいね状態・反応タグの内訳・
  * (投票投稿の場合は)投票情報を付与する共通処理。
+ *
+ * パフォーマンス上の注意: likes・reaction_tags・emotion_tagsの取得と
+ * attachPollDataは互いに依存しないため、Promise.allで並列実行する。
+ * 直列で書くと1回のフィード表示でDBラウンドトリップが積み重なり、
+ * 画面遷移の体感速度に直結するため。
  */
 async function attachReactionData(
   rawPosts: unknown[],
@@ -26,43 +31,45 @@ async function attachReactionData(
   const supabase = await createClient();
   const postIds = rawPosts.map((p) => (p as { id: string }).id);
 
-  let likedPostIds = new Set<string>();
-  if (currentUserId && postIds.length > 0) {
-    const { data: likes } = await supabase
-      .from("likes")
-      .select("post_id")
-      .eq("user_id", currentUserId)
-      .in("post_id", postIds);
-    likedPostIds = new Set((likes ?? []).map((l) => l.post_id));
-  }
+  const [likesResult, reactionsResult, emotionTags] = await Promise.all([
+    currentUserId && postIds.length > 0
+      ? supabase
+          .from("likes")
+          .select("post_id")
+          .eq("user_id", currentUserId)
+          .in("post_id", postIds)
+      : Promise.resolve({ data: [] as { post_id: string }[] }),
+    postIds.length > 0
+      ? supabase
+          .from("reaction_tags")
+          .select("post_id, user_id, emotion_tag_id")
+          .in("post_id", postIds)
+      : Promise.resolve({
+          data: [] as { post_id: string; user_id: string; emotion_tag_id: number }[],
+        }),
+    getEmotionTags(),
+  ]);
+
+  const likedPostIds = new Set((likesResult.data ?? []).map((l) => l.post_id));
 
   const reactionSummaryByPost = new Map<string, Map<number, number>>();
   const myReactionsByPost = new Map<string, Set<number>>();
 
-  if (postIds.length > 0) {
-    const { data: reactions } = await supabase
-      .from("reaction_tags")
-      .select("post_id, user_id, emotion_tag_id")
-      .in("post_id", postIds);
+  for (const row of reactionsResult.data ?? []) {
+    if (!reactionSummaryByPost.has(row.post_id)) {
+      reactionSummaryByPost.set(row.post_id, new Map());
+    }
+    const tagCounts = reactionSummaryByPost.get(row.post_id)!;
+    tagCounts.set(row.emotion_tag_id, (tagCounts.get(row.emotion_tag_id) ?? 0) + 1);
 
-    for (const r of reactions ?? []) {
-      const row = r as { post_id: string; user_id: string; emotion_tag_id: number };
-      if (!reactionSummaryByPost.has(row.post_id)) {
-        reactionSummaryByPost.set(row.post_id, new Map());
+    if (currentUserId && row.user_id === currentUserId) {
+      if (!myReactionsByPost.has(row.post_id)) {
+        myReactionsByPost.set(row.post_id, new Set());
       }
-      const tagCounts = reactionSummaryByPost.get(row.post_id)!;
-      tagCounts.set(row.emotion_tag_id, (tagCounts.get(row.emotion_tag_id) ?? 0) + 1);
-
-      if (currentUserId && row.user_id === currentUserId) {
-        if (!myReactionsByPost.has(row.post_id)) {
-          myReactionsByPost.set(row.post_id, new Set());
-        }
-        myReactionsByPost.get(row.post_id)!.add(row.emotion_tag_id);
-      }
+      myReactionsByPost.get(row.post_id)!.add(row.emotion_tag_id);
     }
   }
 
-  const emotionTags = await getEmotionTags();
   const emotionTagById = new Map<number, EmotionTag>(
     emotionTags.map((t) => [t.id, t])
   );

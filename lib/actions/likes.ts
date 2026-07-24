@@ -48,19 +48,22 @@ export async function toggleLike(postId: string): Promise<ToggleLikeResult> {
 
     if (error) return { liked: false, error: "いいねに失敗しました" };
 
-    // 投稿者に通知(自分の投稿への自分のいいねは通知しない)
-    const { data: post } = await supabase
-      .from("posts")
-      .select("user_id, word")
-      .eq("id", postId)
-      .single<{ user_id: string; word: string }>();
-
-    if (post && post.user_id !== user.id) {
-      const { data: liker } = await supabase
+    // 投稿情報と、いいねした本人の表示名を並列取得する
+    // (互いに依存しないクエリのため)
+    const [{ data: post }, { data: liker }] = await Promise.all([
+      supabase
+        .from("posts")
+        .select("user_id, word")
+        .eq("id", postId)
+        .single<{ user_id: string; word: string }>(),
+      supabase
         .from("users")
         .select("display_name, username")
         .eq("id", user.id)
-        .single<{ display_name: string | null; username: string }>();
+        .single<{ display_name: string | null; username: string }>(),
+    ]);
+
+    if (post && post.user_id !== user.id) {
       const likerName = liker?.display_name || liker?.username || "誰か";
 
       await createNotification({
@@ -70,7 +73,10 @@ export async function toggleLike(postId: string): Promise<ToggleLikeResult> {
         postId,
       });
 
-      await sendPushNotification({
+      // 外部API(OneSignal)への通知送信はレスポンスを待たずに実行する。
+      // awaitしてしまうと、外部APIの応答が遅い場合にいいね操作自体の
+      // 体感速度が悪化するため(ユーザーには即座に結果を返したい)。
+      sendPushNotification({
         toUserId: post.user_id,
         title: "いいねが届きました",
         message: `${likerName}さんが「${post.word}」にいいねしました`,

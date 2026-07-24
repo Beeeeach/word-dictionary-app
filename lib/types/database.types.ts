@@ -48,6 +48,7 @@ export interface Database {
           meaning: string | null;
           context: string | null;
           photo_url: string | null;
+          note: string | null;
           visibility: Visibility;
           post_type: "word" | "poll";
           like_count: number;
@@ -62,6 +63,7 @@ export interface Database {
           meaning?: string | null;
           context?: string | null;
           photo_url?: string | null;
+          note?: string | null;
           visibility?: Visibility;
           post_type?: "word" | "poll";
         };
@@ -70,6 +72,7 @@ export interface Database {
           meaning?: string | null;
           context?: string | null;
           photo_url?: string | null;
+          note?: string | null;
           visibility?: Visibility;
           post_type?: "word" | "poll";
         };

@@ -31,6 +31,7 @@ export async function createPost(
   const word = String(formData.get("word") ?? "").trim();
   const meaning = String(formData.get("meaning") ?? "").trim();
   const context = String(formData.get("context") ?? "").trim();
+  const note = String(formData.get("note") ?? "").trim();
   const visibility = formData.get("visibility") === "private" ? "private" : "public";
   const emotionTagIds = formData
     .getAll("emotion_tags")
@@ -43,6 +44,9 @@ export async function createPost(
   }
   if (word.length > 100) {
     return { error: "単語は100文字以内で入力してください" };
+  }
+  if (note.length > 200) {
+    return { error: "ひとことは200文字以内で入力してください" };
   }
 
   // --- 写真アップロード（任意項目） ---
@@ -87,6 +91,7 @@ export async function createPost(
       meaning: meaning || null,
       context: context || null,
       photo_url: photoUrl,
+      note: note || null,
       visibility,
     })
     .select("id")

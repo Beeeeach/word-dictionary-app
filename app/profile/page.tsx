@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/supabase/current-user";
 import { signOut } from "@/lib/actions/auth";
 import { getFollowCounts } from "@/lib/data/follows";
 import { BottomTabBar } from "@/components/BottomTabBar";
@@ -9,15 +10,13 @@ import { AvatarForm } from "./AvatarForm";
 import { BioForm } from "./BioForm";
 
 export default async function ProfilePage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
 
   if (!user) {
     redirect("/login");
   }
 
+  const supabase = await createClient();
   const [{ data: profile }, followCounts] = await Promise.all([
     supabase
       .from("users")

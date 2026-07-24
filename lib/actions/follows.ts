@@ -64,7 +64,8 @@ export async function toggleFollow(followeeId: string): Promise<ToggleFollowResu
       type: "follow",
     });
 
-    await sendPushNotification({
+    // 外部API(OneSignal)への通知送信はレスポンスを待たずに実行する
+    sendPushNotification({
       toUserId: followeeId,
       title: "新しいフォロワー",
       message: `${followerName}さんにフォローされました`,

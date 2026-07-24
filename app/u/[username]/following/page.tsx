@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/supabase/current-user";
 import { getUserByUsername } from "@/lib/data/dictionary";
 import { getFollowingUsers } from "@/lib/data/follows";
 import { UserList } from "@/components/UserList";
@@ -13,16 +13,14 @@ export default async function FollowingPage({
 }) {
   const { username } = await params;
 
-  const supabase = await createClient();
-  const {
-    data: { user: viewer },
-  } = await supabase.auth.getUser();
+  const [viewer, profile] = await Promise.all([
+    getCurrentUser(),
+    getUserByUsername(username),
+  ]);
 
   if (!viewer) {
     redirect("/login");
   }
-
-  const profile = await getUserByUsername(username);
   if (!profile) {
     notFound();
   }

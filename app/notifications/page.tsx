@@ -1,15 +1,12 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/supabase/current-user";
 import { getNotifications } from "@/lib/data/notifications";
 import { BottomTabBar } from "@/components/BottomTabBar";
 import { NotificationList } from "./NotificationList";
 
 export default async function NotificationsPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
 
   if (!user) {
     redirect("/login");

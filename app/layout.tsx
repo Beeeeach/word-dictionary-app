@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { createClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/supabase/current-user";
 import { OneSignalInit } from "@/components/OneSignalInit";
 
 // 注: フォントは Step 7 前後のデザインフェーズで正式決定する。
@@ -18,10 +18,7 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
 
   return (
     <html lang="ja" className="h-full antialiased">

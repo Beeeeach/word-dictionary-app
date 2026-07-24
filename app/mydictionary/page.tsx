@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/supabase/current-user";
 import { getMyPosts, getMyDictionaryStats } from "@/lib/data/dictionary";
 import { getEmotionTags } from "@/lib/data/emotion-tags";
 import { BottomTabBar } from "@/components/BottomTabBar";
@@ -12,10 +12,7 @@ import { MyDictionaryView } from "./MyDictionaryView";
  * 蓄積している実感を持たせる。
  */
 export default async function MyDictionaryPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
 
   if (!user) {
     redirect("/login");

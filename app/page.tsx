@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/supabase/current-user";
 import { getFeedPosts } from "@/lib/data/posts";
 import { getEmotionTags } from "@/lib/data/emotion-tags";
 import { getUnreadNotificationCount } from "@/lib/data/notifications";
@@ -14,10 +14,7 @@ import { NotificationBell } from "@/components/NotificationBell";
  * 下部にタブバー(ホーム・検索・投稿・自分の辞書・プロフィール)。
  */
 export default async function Home() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
 
   if (!user) {
     redirect("/login");

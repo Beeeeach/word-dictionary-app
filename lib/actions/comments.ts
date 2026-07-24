@@ -40,19 +40,21 @@ export async function addComment(
     return { error: "コメントの投稿に失敗しました" };
   }
 
-  // 投稿者に通知(自分の投稿への自分のコメントは通知しない)
-  const { data: post } = await supabase
-    .from("posts")
-    .select("user_id, word")
-    .eq("id", postId)
-    .single<{ user_id: string; word: string }>();
-
-  if (post && post.user_id !== user.id) {
-    const { data: commenter } = await supabase
+  // 投稿情報と、コメントした本人の表示名を並列取得する
+  const [{ data: post }, { data: commenter }] = await Promise.all([
+    supabase
+      .from("posts")
+      .select("user_id, word")
+      .eq("id", postId)
+      .single<{ user_id: string; word: string }>(),
+    supabase
       .from("users")
       .select("display_name, username")
       .eq("id", user.id)
-      .single<{ display_name: string | null; username: string }>();
+      .single<{ display_name: string | null; username: string }>(),
+  ]);
+
+  if (post && post.user_id !== user.id) {
     const commenterName =
       commenter?.display_name || commenter?.username || "誰か";
 
@@ -63,7 +65,8 @@ export async function addComment(
       postId,
     });
 
-    await sendPushNotification({
+    // 外部API(OneSignal)への通知送信はレスポンスを待たずに実行する
+    sendPushNotification({
       toUserId: post.user_id,
       title: "コメントが届きました",
       message: `${commenterName}さんが「${post.word}」にコメントしました`,

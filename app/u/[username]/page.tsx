@@ -1,7 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/supabase/current-user";
 import {
   getUserByUsername,
   getPublicPostsByUser,
@@ -26,16 +26,14 @@ export default async function PublicProfilePage({
 }) {
   const { username } = await params;
 
-  const supabase = await createClient();
-  const {
-    data: { user: viewer },
-  } = await supabase.auth.getUser();
+  const [viewer, profile] = await Promise.all([
+    getCurrentUser(),
+    getUserByUsername(username),
+  ]);
 
   if (!viewer) {
     redirect("/login");
   }
-
-  const profile = await getUserByUsername(username);
   if (!profile) {
     notFound();
   }

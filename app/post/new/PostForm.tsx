@@ -187,6 +187,28 @@ export function PostForm({ emotionTags }: { emotionTags: EmotionTag[] }) {
         />
       </div>
 
+      {/* 自由記述欄（意味・文脈とは別枠のひとこと） */}
+      <div>
+        <label
+          htmlFor="note"
+          className="block text-xs font-bold mb-1"
+          style={{ color: "var(--color-slate)" }}
+        >
+          ひとこと（任意・自由に書いてOK）
+        </label>
+        <textarea
+          id="note"
+          name="note"
+          rows={2}
+          maxLength={200}
+          placeholder="伝えたいことを自由に書いてみましょう"
+          className="w-full rounded-xl border-2 px-3 py-2 text-sm outline-none transition-colors resize-none"
+          style={{ borderColor: "var(--color-line)", color: "var(--color-ink)" }}
+          onFocus={(e) => (e.currentTarget.style.borderColor = "var(--color-indigo)")}
+          onBlur={(e) => (e.currentTarget.style.borderColor = "var(--color-line)")}
+        />
+      </div>
+
       {/* 公開範囲 */}
       <div
         className="flex items-center justify-between rounded-xl px-4 py-3"

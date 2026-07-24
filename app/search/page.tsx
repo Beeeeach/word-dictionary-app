@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/supabase/current-user";
 import { getEmotionTags } from "@/lib/data/emotion-tags";
 import { getTrendingWords } from "@/lib/data/trending";
 import { BottomTabBar } from "@/components/BottomTabBar";
@@ -12,19 +12,15 @@ import { SearchView } from "./SearchView";
  * 左カラムには急上昇ワードTOP5を表示する。
  */
 export default async function SearchPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const [user, emotionTags, trendingWords] = await Promise.all([
+    getCurrentUser(),
+    getEmotionTags(),
+    getTrendingWords(5),
+  ]);
 
   if (!user) {
     redirect("/login");
   }
-
-  const [emotionTags, trendingWords] = await Promise.all([
-    getEmotionTags(),
-    getTrendingWords(5),
-  ]);
 
   return (
     <div className="flex-1 flex flex-col" style={{ background: "var(--color-paper)" }}>

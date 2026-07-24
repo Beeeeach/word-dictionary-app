@@ -1,20 +1,18 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/supabase/current-user";
 import { getEmotionTags } from "@/lib/data/emotion-tags";
 import { PostForm } from "./PostForm";
 
 export default async function NewPostPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const [user, emotionTags] = await Promise.all([
+    getCurrentUser(),
+    getEmotionTags(),
+  ]);
 
   if (!user) {
     redirect("/login");
   }
-
-  const emotionTags = await getEmotionTags();
 
   return (
     <main

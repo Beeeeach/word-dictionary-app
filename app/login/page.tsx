@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { getCurrentUser } from "@/lib/supabase/current-user";
 import { BrandHeader } from "@/components/Logo";
 import { AuthForm } from "./AuthForm";
 
@@ -8,10 +8,7 @@ export default async function LoginPage({
 }: {
   searchParams: Promise<{ message?: string; error?: string }>;
 }) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
 
   // 既にログイン済みならホームへ
   if (user) {
