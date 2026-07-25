@@ -1,7 +1,9 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { getCurrentUser } from "@/lib/supabase/current-user";
 import { OneSignalInit } from "@/components/OneSignalInit";
+import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
+import { InstallPrompt } from "@/components/InstallPrompt";
 
 // 注: フォントは Step 7 前後のデザインフェーズで正式決定する。
 // (このサンドボックス環境では Google Fonts への外部アクセスが
@@ -11,6 +13,16 @@ export const metadata: Metadata = {
   title: "DicDic | コトバを広げるSNS",
   description: "面白い単語・びっくりした単語を投稿し、みんなで育てる言葉の辞書SNS「DicDic」",
   manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "DicDic",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#1c1b29",
+  viewportFit: "cover",
 };
 
 export default async function RootLayout({
@@ -24,7 +36,9 @@ export default async function RootLayout({
     <html lang="ja" className="h-full antialiased">
       <body className="min-h-full flex flex-col">
         <OneSignalInit userId={user?.id ?? null} />
+        <ServiceWorkerRegister />
         {children}
+        <InstallPrompt />
       </body>
     </html>
   );

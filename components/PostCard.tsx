@@ -37,29 +37,33 @@ export function PostCard({
     >
       {/* ヘッダー: 投稿者・時刻・非公開バッジ */}
       <div className="flex items-center justify-between text-xs" style={{ color: "var(--color-slate-light)" }}>
-        <Link
-          href={`/u/${post.users?.username}`}
-          className="flex items-center gap-2 min-w-0"
-        >
-          {post.users?.avatar_url ? (
-            <Image
-              src={post.users.avatar_url}
-              alt=""
-              width={20}
-              height={20}
-              className="rounded-full shrink-0"
-            />
-          ) : (
-            <div
-              className="w-5 h-5 rounded-full shrink-0"
-              style={{ background: "var(--color-line)" }}
-            />
-          )}
-          <span className="font-bold truncate" style={{ color: "var(--color-slate)" }}>
-            {authorName}
-          </span>
-          <span className="shrink-0">・{timeAgo(post.created_at)}</span>
-        </Link>
+        <div className="flex items-center gap-2 min-w-0">
+          <Link
+            href={`/u/${post.users?.username}`}
+            className="flex items-center gap-2 min-w-0"
+          >
+            {post.users?.avatar_url ? (
+              <Image
+                src={post.users.avatar_url}
+                alt=""
+                width={20}
+                height={20}
+                className="rounded-full shrink-0"
+              />
+            ) : (
+              <div
+                className="w-5 h-5 rounded-full shrink-0"
+                style={{ background: "var(--color-line)" }}
+              />
+            )}
+            <span className="font-bold truncate" style={{ color: "var(--color-slate)" }}>
+              {authorName}
+            </span>
+          </Link>
+          <Link href={`/post/${post.id}`} className="shrink-0 hover:underline">
+            ・{timeAgo(post.created_at)}
+          </Link>
+        </div>
         {post.visibility === "private" && (
           <span
             className="rounded-full px-2 py-0.5 text-[11px] font-medium shrink-0"

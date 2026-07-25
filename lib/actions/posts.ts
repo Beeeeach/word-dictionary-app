@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { bumpStreak } from "@/lib/actions/streaks";
 
 export type CreatePostResult = { error: string } | undefined;
 
@@ -100,6 +101,9 @@ export async function createPost(
   if (postError || !post) {
     return { error: "投稿の作成に失敗しました。時間をおいて再度お試しください" };
   }
+
+  // --- ストリーク（連続投稿日数）を更新 ---
+  await bumpStreak(supabase, user.id);
 
   // --- 投稿者の感情タグを保存（任意・複数選択可） ---
   if (emotionTagIds.length > 0) {

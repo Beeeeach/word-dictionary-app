@@ -20,13 +20,17 @@ export default async function ProfilePage() {
   const [{ data: profile }, followCounts] = await Promise.all([
     supabase
       .from("users")
-      .select("username, display_name, avatar_url, bio")
+      .select(
+        "username, display_name, avatar_url, bio, current_streak, longest_streak"
+      )
       .eq("id", user.id)
       .single<{
         username: string;
         display_name: string | null;
         avatar_url: string | null;
         bio: string | null;
+        current_streak: number;
+        longest_streak: number;
       }>(),
     getFollowCounts(user.id),
   ]);
@@ -67,6 +71,23 @@ export default async function ProfilePage() {
                 フォロー中
               </span>
             </Link>
+          </div>
+        )}
+
+        {/* 連続投稿記録 */}
+        {(profile?.current_streak ?? 0) > 0 && (
+          <div
+            className="rounded-2xl p-5 mb-4 flex items-center justify-between"
+            style={{ background: "var(--color-paper-raised)", border: "1px solid var(--color-line)" }}
+          >
+            <div>
+              <p className="text-2xl font-extrabold" style={{ color: "var(--color-coral)" }}>
+                🔥 {profile?.current_streak}日連続
+              </p>
+              <p className="text-xs mt-1" style={{ color: "var(--color-slate)" }}>
+                自己ベスト: {profile?.longest_streak}日
+              </p>
+            </div>
           </div>
         )}
 

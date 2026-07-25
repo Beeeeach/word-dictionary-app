@@ -22,6 +22,9 @@ export interface Database {
           display_name: string | null;
           avatar_url: string | null;
           bio: string | null;
+          current_streak: number;
+          longest_streak: number;
+          last_posted_date: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -405,6 +408,10 @@ export interface Database {
       };
       cleanup_old_notifications: {
         Args: Record<string, never>;
+        Returns: undefined;
+      };
+      update_user_streak: {
+        Args: { target_user_id: string };
         Returns: undefined;
       };
     };

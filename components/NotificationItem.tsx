@@ -90,6 +90,10 @@ export function NotificationItem({
     return <Link href={`/u/${notification.actor.username}`}>{content}</Link>;
   }
 
-  // 投稿系の通知は、現状は投稿単体ページが無いためホームへ遷移する
+  // 投稿系の通知は、対応する投稿単体ページへ遷移する
+  if (notification.post_id) {
+    return <Link href={`/post/${notification.post_id}`}>{content}</Link>;
+  }
+
   return <Link href="/">{content}</Link>;
 }

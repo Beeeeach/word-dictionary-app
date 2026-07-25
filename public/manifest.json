@@ -1,12 +1,16 @@
 {
+  "id": "/",
   "name": "DicDic - コトバを広げるSNS",
   "short_name": "DicDic",
   "description": "面白い単語・びっくりした単語をみんなで投稿して育てる、言葉の辞書SNSアプリ",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#fdfbf4",
   "theme_color": "#1c1b29",
   "orientation": "portrait",
+  "lang": "ja",
+  "categories": ["social", "lifestyle", "education"],
   "icons": [
     {
       "src": "/icon-192.png",

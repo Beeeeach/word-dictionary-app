@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { bumpStreak } from "@/lib/actions/streaks";
 
 export type CreatePollResult = { error: string } | undefined;
 
@@ -88,6 +89,9 @@ export async function createPoll(
   if (settingsError) {
     return { error: "締切設定の保存に失敗しました" };
   }
+
+  // --- ストリーク（連続投稿日数）を更新 ---
+  await bumpStreak(supabase, user.id);
 
   revalidatePath("/");
   redirect("/");

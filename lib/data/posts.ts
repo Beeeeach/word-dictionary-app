@@ -196,3 +196,24 @@ export async function getFeedPosts(
 }
 
 export { PAGE_SIZE };
+
+/**
+ * 投稿を1件だけ取得する（投稿単体ページ・シェア画像生成用）。
+ * RLSにより、非公開投稿は投稿者本人以外には返らない。
+ */
+export async function getPostById(
+  postId: string,
+  currentUserId: string | null
+): Promise<PostWithRelations | null> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("posts")
+    .select(POST_SELECT)
+    .eq("id", postId)
+    .maybeSingle();
+
+  if (error || !data) return null;
+
+  const [enriched] = await attachReactionData([data], currentUserId);
+  return enriched ?? null;
+}
