@@ -75,13 +75,27 @@ export function PostCard({
       </div>
 
       {/* 単語（またはpoll_typeが投票の場合は投票タイトル） */}
-      <h2
-        className="text-2xl font-extrabold leading-snug"
-        style={{ color: "var(--color-ink)" }}
-      >
-        {post.post_type === "poll" && "🗳️ "}
-        {post.word}
-      </h2>
+      <div className="flex items-start justify-between gap-2">
+        <h2
+          className="text-2xl font-extrabold leading-snug"
+          style={{ color: "var(--color-ink)" }}
+        >
+          {post.post_type === "poll" && "🗳️ "}
+          {post.word}
+        </h2>
+        {post.post_type !== "poll" && (
+          <a
+            href={`https://www.weblio.jp/content/${encodeURIComponent(post.word)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="shrink-0 mt-1.5 text-xs font-bold underline underline-offset-2"
+            style={{ color: "var(--color-indigo)" }}
+            title="Weblio辞書で調べる"
+          >
+            Weblioで調べる ↗
+          </a>
+        )}
+      </div>
 
       {post.post_type === "poll" && post.poll ? (
         <PollCard
