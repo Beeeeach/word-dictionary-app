@@ -4,6 +4,7 @@ import { useEffect, useState, useTransition } from "react";
 import { PostCard } from "@/components/PostCard";
 import { TabBar } from "@/components/TabBar";
 import { searchDictionary, searchMyDictionary } from "@/lib/actions/search";
+import { looksLikeRegex, tryParseRegex } from "@/lib/search/fuzzy";
 import type { EmotionTag, PostWithRelations } from "@/lib/types/database.types";
 import type { TrendingWord } from "@/lib/data/trending";
 import { TrendingWords } from "./TrendingWords";
@@ -51,6 +52,9 @@ export function SearchView({
     if (keyword.trim()) runSearch(keyword, nextTab as Tab);
   }
 
+  const isRegexMode = looksLikeRegex(keyword.trim());
+  const isValidRegex = isRegexMode && tryParseRegex(keyword.trim()) !== null;
+
   // 急上昇ワードがタップされたら、検索欄に反映して自動検索する
   useEffect(() => {
     function handleTrendingSelected(e: Event) {
@@ -81,7 +85,7 @@ export function SearchView({
           onChange={handleTabChange}
         />
 
-        <form onSubmit={handleSubmit} className="mb-5">
+        <form onSubmit={handleSubmit} className="mb-2">
           <div className="flex gap-2">
             <input
               value={keyword}
@@ -101,6 +105,13 @@ export function SearchView({
             </button>
           </div>
         </form>
+
+        {isRegexMode && (
+          <p className="text-xs mb-3" style={{ color: "var(--color-indigo)" }}>
+            {isValidRegex ? "🔍 正規表現として検索します" : "⚠️ 正規表現の形式が正しくありません"}
+          </p>
+        )}
+        {!isRegexMode && <div className="mb-3" />}
 
         {isPending && (
           <p className="text-center text-xs py-8" style={{ color: "var(--color-slate-light)" }}>

@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import type { EmotionTag, PostWithRelations } from "@/lib/types/database.types";
 import { getEmotionTags } from "@/lib/data/emotion-tags";
 import { attachPollData } from "@/lib/data/polls";
+import { fuzzyMatch, tryParseRegex, looksLikeRegex } from "@/lib/search/fuzzy";
 
 const POST_SELECT = `
   id, user_id, word, meaning, context, photo_url, note, visibility, post_type,
@@ -93,44 +94,72 @@ async function enrichPosts(
  * 「みんなの辞書」検索。
  * 企画書7-3章: 同じ単語が複数ユーザーから投稿されていても名寄せせず、
  * 投稿ごとに個別のカードとして表示する。
+ *
+ * 検索の柔軟性:
+ *   - キーワードに正規表現特有の記号(., *, ?, [] 等)が含まれる場合、
+ *     まず正規表現として解釈を試み、有効ならそれで単語をマッチさせる。
+ *   - それ以外は、ひらがな/カタカナ・全角半角・大文字小文字を無視した
+ *     あいまい一致(1〜2文字程度の表記ゆれ・入力ミスも許容)で判定する。
+ *   - PostgreSQL側の ilike では上記の柔軟な一致を表現できないため、
+ *     直近の投稿を一定件数取得した上で、アプリ側でフィルタする方式にしている。
  */
 export async function searchAllPosts(
   keyword: string,
   currentUserId: string | null
 ): Promise<PostWithRelations[]> {
-  if (!keyword.trim()) return [];
+  const trimmed = keyword.trim();
+  if (!trimmed) return [];
 
   const supabase = await createClient();
+
+  // 検索対象の母集団: 直近500件の公開投稿(+自分の非公開投稿)を取得してから
+  // アプリ側でフィルタする。全文検索エンジンではないため、この規模を上限とする。
   const { data, error } = await supabase
     .from("posts")
     .select(POST_SELECT)
-    .ilike("word", `%${keyword.trim()}%`)
     .order("created_at", { ascending: false })
-    .limit(50);
+    .limit(500);
 
   if (error || !data) return [];
-  return enrichPosts(data, currentUserId);
+
+  const regex = looksLikeRegex(trimmed) ? tryParseRegex(trimmed) : null;
+
+  const matched = (data as unknown as { word: string }[]).filter((row) =>
+    regex ? regex.test(row.word) : fuzzyMatch(trimmed, row.word)
+  );
+
+  const limited = matched.slice(0, 50);
+  return enrichPosts(limited, currentUserId);
 }
 
-/** 自分の投稿一覧（自分の辞書ページ用）。キーワードがあれば絞り込む。 */
+/**
+ * 自分の投稿一覧（自分の辞書ページ用）。キーワードがあれば絞り込む。
+ * 検索ロジックは searchAllPosts と同様（あいまい一致・正規表現対応）。
+ */
 export async function getMyPosts(
   userId: string,
   keyword?: string
 ): Promise<PostWithRelations[]> {
   const supabase = await createClient();
-  let query = supabase
+  const { data, error } = await supabase
     .from("posts")
     .select(POST_SELECT)
     .eq("user_id", userId)
     .order("created_at", { ascending: false });
 
-  if (keyword?.trim()) {
-    query = query.ilike("word", `%${keyword.trim()}%`);
+  if (error || !data) return [];
+
+  const trimmed = keyword?.trim();
+  if (!trimmed) {
+    return enrichPosts(data, userId);
   }
 
-  const { data, error } = await query;
-  if (error || !data) return [];
-  return enrichPosts(data, userId);
+  const regex = looksLikeRegex(trimmed) ? tryParseRegex(trimmed) : null;
+  const matched = (data as unknown as { word: string }[]).filter((row) =>
+    regex ? regex.test(row.word) : fuzzyMatch(trimmed, row.word)
+  );
+
+  return enrichPosts(matched, userId);
 }
 
 /** 自分の辞書ページの統計サマリー */

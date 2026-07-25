@@ -1,3 +1,6 @@
+"use client";
+
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import type { EmotionTag, PostWithRelations } from "@/lib/types/database.types";
@@ -18,6 +21,20 @@ function timeAgo(dateString: string): string {
   return new Date(dateString).toLocaleDateString("ja-JP");
 }
 
+/**
+ * カード内の対話要素(リンク・ボタン・フォーム)をラップし、
+ * クリックがカード全体のonClickまで伝播しないようにするための薄いラッパー。
+ * カード全体をタップ可能にしつつ、内部のいいね・コメント・Weblioリンク等が
+ * 意図せず投稿詳細への遷移を引き起こさないようにするために必要。
+ */
+function StopPropagation({ children }: { children: React.ReactNode }) {
+  return (
+    <div onClick={(e) => e.stopPropagation()} className="contents">
+      {children}
+    </div>
+  );
+}
+
 export function PostCard({
   post,
   currentUserId,
@@ -27,17 +44,19 @@ export function PostCard({
   currentUserId: string | null;
   allEmotionTags: EmotionTag[];
 }) {
+  const router = useRouter();
   const authorName = post.users?.display_name || post.users?.username || "名無し";
   const posterTags = post.post_emotion_tags?.map((t) => t.emotion_tags) ?? [];
 
   return (
     <article
-      className="rounded-2xl p-5 space-y-3"
+      onClick={() => router.push(`/post/${post.id}`)}
+      className="rounded-2xl p-5 space-y-3 cursor-pointer transition-colors hover:bg-black/[0.015]"
       style={{ background: "var(--color-paper-raised)", border: "1px solid var(--color-line)" }}
     >
       {/* ヘッダー: 投稿者・時刻・非公開バッジ */}
       <div className="flex items-center justify-between text-xs" style={{ color: "var(--color-slate-light)" }}>
-        <div className="flex items-center gap-2 min-w-0">
+        <StopPropagation>
           <Link
             href={`/u/${post.users?.username}`}
             className="flex items-center gap-2 min-w-0"
@@ -59,11 +78,9 @@ export function PostCard({
             <span className="font-bold truncate" style={{ color: "var(--color-slate)" }}>
               {authorName}
             </span>
+            <span className="shrink-0">・{timeAgo(post.created_at)}</span>
           </Link>
-          <Link href={`/post/${post.id}`} className="shrink-0 hover:underline">
-            ・{timeAgo(post.created_at)}
-          </Link>
-        </div>
+        </StopPropagation>
         {post.visibility === "private" && (
           <span
             className="rounded-full px-2 py-0.5 text-[11px] font-medium shrink-0"
@@ -75,7 +92,7 @@ export function PostCard({
       </div>
 
       {/* 単語（またはpoll_typeが投票の場合は投票タイトル） */}
-      <div className="flex items-start justify-between gap-2">
+      <div className="flex items-baseline justify-between gap-2">
         <h2
           className="text-2xl font-extrabold leading-snug"
           style={{ color: "var(--color-ink)" }}
@@ -84,28 +101,32 @@ export function PostCard({
           {post.word}
         </h2>
         {post.post_type !== "poll" && (
-          <a
-            href={`https://www.weblio.jp/content/${encodeURIComponent(post.word)}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="shrink-0 mt-1.5 text-xs font-bold underline underline-offset-2"
-            style={{ color: "var(--color-indigo)" }}
-            title="Weblio辞書で調べる"
-          >
-            Weblioで調べる ↗
-          </a>
+          <StopPropagation>
+            <a
+              href={`https://www.weblio.jp/content/${encodeURIComponent(post.word)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="shrink-0 text-xs"
+              style={{ color: "var(--color-slate-light)" }}
+              title="Weblio辞書で調べる"
+            >
+              Weblio ↗
+            </a>
+          </StopPropagation>
         )}
       </div>
 
       {post.post_type === "poll" && post.poll ? (
-        <PollCard
-          postId={post.id}
-          closesAt={post.poll.closesAt}
-          options={post.poll.options}
-          myVoteOptionId={post.poll.myVoteOptionId}
-          totalVotes={post.poll.totalVotes}
-          disabled={!currentUserId}
-        />
+        <StopPropagation>
+          <PollCard
+            postId={post.id}
+            closesAt={post.poll.closesAt}
+            options={post.poll.options}
+            myVoteOptionId={post.poll.myVoteOptionId}
+            totalVotes={post.poll.totalVotes}
+            disabled={!currentUserId}
+          />
+        </StopPropagation>
       ) : (
         <>
           {/* 投稿者が付けた感情タグ */}
@@ -130,13 +151,13 @@ export function PostCard({
             </p>
           )}
 
-          {/* 出会った文脈（入力があれば表示） */}
-          {post.context && (
+          {/* 出会った文脈・ひとこと（入力があれば表示、視覚的な優先度は意味より低く統一） */}
+          {(post.context || post.note) && (
             <p
-              className="text-xs whitespace-pre-wrap border-l-2 pl-3"
-              style={{ color: "var(--color-slate)", borderColor: "var(--color-line)" }}
+              className="text-xs whitespace-pre-wrap"
+              style={{ color: "var(--color-slate)" }}
             >
-              {post.context}
+              {[post.context, post.note].filter(Boolean).join(" ・ ")}
             </p>
           )}
 
@@ -151,49 +172,43 @@ export function PostCard({
               />
             </div>
           )}
-
-          {/* ひとこと自由記述（入力があれば表示） */}
-          {post.note && (
-            <p
-              className="text-sm whitespace-pre-wrap rounded-xl px-3 py-2"
-              style={{ background: "#F3F1E9", color: "var(--color-ink)" }}
-            >
-              {post.note}
-            </p>
-          )}
         </>
       )}
 
       {/* 閲覧者による反応タグ */}
-      <ReactionTags
-        postId={post.id}
-        allTags={allEmotionTags}
-        initialSummary={post.reaction_summary ?? []}
-        initialMyTagIds={post.my_reaction_tag_ids ?? []}
-        disabled={!currentUserId}
-      />
+      <StopPropagation>
+        <ReactionTags
+          postId={post.id}
+          allTags={allEmotionTags}
+          initialSummary={post.reaction_summary ?? []}
+          initialMyTagIds={post.my_reaction_tag_ids ?? []}
+          disabled={!currentUserId}
+        />
+      </StopPropagation>
 
       {/* フッター: いいね・コメント */}
-      <div
-        className="flex items-center gap-4 pt-2 border-t"
-        style={{ borderColor: "var(--color-line)" }}
-      >
-        <div className="pt-2">
-          <LikeButton
-            postId={post.id}
-            initialCount={post.like_count}
-            initiallyLiked={post.liked_by_me ?? false}
-            disabled={!currentUserId}
-          />
+      <StopPropagation>
+        <div
+          className="flex items-center gap-4 pt-2 border-t"
+          style={{ borderColor: "var(--color-line)" }}
+        >
+          <div className="pt-2">
+            <LikeButton
+              postId={post.id}
+              initialCount={post.like_count}
+              initiallyLiked={post.liked_by_me ?? false}
+              disabled={!currentUserId}
+            />
+          </div>
+          <div className="pt-2 flex-1">
+            <CommentSection
+              postId={post.id}
+              commentCount={post.comment_count}
+              currentUserId={currentUserId}
+            />
+          </div>
         </div>
-        <div className="pt-2 flex-1">
-          <CommentSection
-            postId={post.id}
-            commentCount={post.comment_count}
-            currentUserId={currentUserId}
-          />
-        </div>
-      </div>
+      </StopPropagation>
     </article>
   );
 }
