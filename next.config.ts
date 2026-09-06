@@ -23,6 +23,14 @@ const nextConfig: NextConfig = {
       bodySizeLimit: "6mb",
     },
   },
+  // 注: Next.js 16のデフォルトビルダーであるTurbopackには、日本語などの
+  // マルチバイト文字を含むコメント・文字列がソースコード中の特定のバイト
+  // 位置にあると、コードフレーム生成処理(next-code-frame)がバイトオフセットと
+  // 文字境界のずれでパニックし、ビルドが失敗する既知の問題がある
+  // (例: "end byte index N is not a char boundary" というエラー)。
+  // turbopack: false 等の next.config.ts 側の設定はこの問題を回避できないため
+  // (Next.js 16では未サポート)、package.json の build スクリプトで
+  // "next build --webpack" を指定し、Turbopackを使わずビルドすることで回避している。
 };
 
 export default nextConfig;
