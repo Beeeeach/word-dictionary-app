@@ -5,7 +5,8 @@ import { getCurrentUserProfile } from "@/lib/supabase/current-user";
 import { getFeedPosts, type FeedSort } from "@/lib/data/posts";
 import type { PostWithRelations } from "@/lib/types/database.types";
 
-/** 無限スクロール用: クライアントコンポーネントから追加ページを取得するためのAction */
+// 無限スクロール用。
+// クライアントコンポーネントから追加ページを取得するための Server Action。
 export async function fetchMoreFeedPosts(
   sort: FeedSort,
   page: number
