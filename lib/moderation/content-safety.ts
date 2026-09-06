@@ -119,13 +119,31 @@ export async function checkDuplicateContent(
   content: string
 ): Promise<string | null> {
   const since = new Date(Date.now() - RATE_LIMIT_WINDOW_MS).toISOString();
-  const column = table === "posts" ? "word" : "body";
+
+  if (table === "posts") {
+    const { count, error } = await supabase
+      .from("posts")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", userId)
+      .eq("word", content)
+      .gte("created_at", since);
+
+    if (error) {
+      return null;
+    }
+
+    if ((count ?? 0) > 0) {
+      return "同じ内容の投稿が直前にあります。内容を変えて投稿してください。";
+    }
+
+    return null;
+  }
 
   const { count, error } = await supabase
-    .from(table)
+    .from("comments")
     .select("id", { count: "exact", head: true })
     .eq("user_id", userId)
-    .eq(column, content)
+    .eq("body", content)
     .gte("created_at", since);
 
   if (error) {
