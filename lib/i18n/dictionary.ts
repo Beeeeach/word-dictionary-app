@@ -514,7 +514,19 @@ export const en = {
   },
 } as const;
 
-export type Dictionary = typeof ja;
+/**
+ * ja/en共通の型。
+ * `typeof ja` だけだとリテラル文字列型がそのまま固定され、
+ * enの文字列(異なるリテラル値)を代入できずに型エラーになるため、
+ * 全ての string / (…) => string リテラルを緩めた型に変換する。
+ */
+type Widen<T> = T extends string
+  ? string
+  : T extends (...args: infer A) => string
+  ? (...args: A) => string
+  : { [K in keyof T]: Widen<T[K]> };
+
+export type Dictionary = Widen<typeof ja>;
 
 /** 英語学習者モードのオン/オフに応じて辞書を返す */
 export function getDictionary(learnerMode: boolean): Dictionary {
