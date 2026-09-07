@@ -39,7 +39,13 @@ export async function isCurrentUserAdmin(): Promise<boolean> {
 
 /**
  * 未対応(status='pending')の通報一覧を、対象の内容・投稿者情報つきで取得する。
- * 管理者専用。呼び出し前に isCurrentUserAdmin() での確認が必須。
+ * 管理者専用。
+ *
+ * セキュリティ監査での修正: RLSに reports_select_admin ポリシー
+ * (supabase/19_security_audit_fixes.sql) を追加したことで、is_admin=trueの
+ * ユーザーは自分の通常セッション(cookieベースのclient)から全件を取得できる。
+ * そのため、ここではservice_role(secret key)を使わず、通常のcreateClient()で
+ * 完結させる。isCurrentUserAdmin()での事前チェックも維持し、二重に保護する。
  */
 export async function getPendingReports(): Promise<PendingReport[]> {
   const isAdmin = await isCurrentUserAdmin();
@@ -123,6 +129,13 @@ export async function getPendingReports(): Promise<PendingReport[]> {
 /**
  * 通報を却下する(status='dismissed')。対象コンテンツは削除しない。
  * is_hiddenで自動非表示になっていた場合は、この操作で表示を復元する。
+ *
+ * セキュリティ監査での修正: reports_update_admin / posts_update_admin /
+ * comments_update_admin ポリシー(supabase/19_security_audit_fixes.sql)を
+ * 追加したことで、管理者は通常セッションのままこれらのUPDATEを実行できる。
+ * service_role(secret key)は「削除」のような取り消せない操作にのみ限定し、
+ * 復元可能な操作はできる限り通常のRLS経由にすることで、
+ * secret keyを使うコードパスを最小限に保つ。
  */
 export async function dismissReport(
   reportId: string,
@@ -132,16 +145,21 @@ export async function dismissReport(
   const isAdmin = await isCurrentUserAdmin();
   if (!isAdmin) return { error: "権限がありません" };
 
-  // service_role(secret key)経由で操作する。一般ユーザー向けRLSでは
-  // reportsのstatus更新やis_hiddenの復元が許可されていないため。
-  const admin = createAdminClient();
+  const supabase = await createClient();
 
-  await admin.from("reports").update({ status: "dismissed" }).eq("id", reportId);
+  const { error: reportError } = await supabase
+    .from("reports")
+    .update({ status: "dismissed" })
+    .eq("id", reportId);
+
+  if (reportError) {
+    return { error: "通報の却下に失敗しました" };
+  }
 
   if (targetType === "post") {
-    await admin.from("posts").update({ is_hidden: false }).eq("id", targetId);
+    await supabase.from("posts").update({ is_hidden: false }).eq("id", targetId);
   } else {
-    await admin.from("comments").update({ is_hidden: false }).eq("id", targetId);
+    await supabase.from("comments").update({ is_hidden: false }).eq("id", targetId);
   }
 
   revalidatePath("/admin");
@@ -152,6 +170,11 @@ export async function dismissReport(
  * 通報された投稿またはコメントを削除する。
  * 削除に伴い、その対象への他の通報レコードもまとめて reviewed 済みにする
  * （対象が存在しなくなるため、それらを未対応のまま残さないようにする）。
+ *
+ * 削除は取り消しがきかない操作のため、意図的にservice_role(secret key)経由の
+ * まま維持する。一般の管理者向けRLSポリシーには delete を許可しているが
+ * (posts_delete_admin等)、二重チェックとしてisCurrentUserAdmin()の
+ * サーバー側検証を必ず経由させ、万一のポリシー設定ミスの影響を抑える。
  */
 export async function deleteReportedContent(
   reportId: string,
