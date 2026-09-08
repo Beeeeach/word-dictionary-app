@@ -72,13 +72,17 @@ export function SearchView({
   }, [tab]);
 
   return (
-    <div className="flex gap-4">
-      {/* 左カラム: 急上昇ワード */}
-      <aside className="w-28 shrink-0 pt-1">
+    // UI修正: 以前は sm 未満でも flex(横並び)のままだったため、
+    // 検索結果カラムの幅が急上昇ワード分だけ圧迫され、
+    // PostCard内の文言がカードからはみ出して見えるバグがあった。
+    // モバイル(sm未満)では縦積み、sm以上で横並びに切り替える。
+    <div className="flex flex-col sm:flex-row gap-4">
+      {/* 急上昇ワード: モバイルでは検索結果の上に横スクロールで表示 */}
+      <aside className="w-full sm:w-28 shrink-0 sm:pt-1">
         <TrendingWords words={trendingWords} learnerMode={learnerMode} />
       </aside>
 
-      {/* 右カラム: 検索フォーム・タブ・結果 */}
+      {/* 検索フォーム・タブ・結果 */}
       <div className="flex-1 min-w-0">
         <TabBar
           tabs={[
@@ -95,7 +99,7 @@ export function SearchView({
               value={keyword}
               onChange={(e) => setKeyword(e.target.value)}
               placeholder={t.search.placeholder}
-              className="flex-1 rounded-full border-2 px-4 py-2.5 text-sm outline-none transition-colors"
+              className="flex-1 min-w-0 rounded-full border-2 px-4 py-2.5 text-sm outline-none transition-colors"
               style={{ borderColor: "var(--color-line)", color: "var(--color-ink)" }}
               onFocus={(e) => (e.currentTarget.style.borderColor = "var(--color-indigo)")}
               onBlur={(e) => (e.currentTarget.style.borderColor = "var(--color-line)")}
@@ -136,7 +140,7 @@ export function SearchView({
         )}
 
         {!isPending && results && results.length > 0 && (
-          <div className="space-y-4">
+          <div className="space-y-4 min-w-0">
             {results.map((post) => (
               <PostCard
                 key={post.id}
