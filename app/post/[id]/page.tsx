@@ -5,6 +5,7 @@ import { getCurrentUser, getCurrentUserProfile } from "@/lib/supabase/current-us
 import { getPostById } from "@/lib/data/posts";
 import { getReactionTags } from "@/lib/data/emotion-tags";
 import { getDictionary } from "@/lib/i18n/dictionary";
+import { isFollowing } from "@/lib/data/follows";
 import { PostCard } from "@/components/PostCard";
 import { BottomTabBar } from "@/components/BottomTabBar";
 import { ShareButton } from "./ShareButton";
@@ -55,6 +56,10 @@ export default async function PostDetailPage({
     notFound();
   }
 
+  // 投稿詳細ページでのみ、投稿カードにフォローボタンを表示する
+  // (企画: フィード・検索結果では出さず、詳細ページに限定する)。
+  const followingAuthor = await isFollowing(user.id, post.user_id);
+
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "";
   const shareUrl = `${siteUrl}/post/${post.id}`;
 
@@ -72,6 +77,8 @@ export default async function PostDetailPage({
           currentUserId={user.id}
           allEmotionTags={reactionTags}
           learnerMode={learnerMode}
+          showFollowButton
+          initiallyFollowingAuthor={followingAuthor}
         />
         <ShareButton word={post.word} shareUrl={shareUrl} learnerMode={learnerMode} />
       </main>
