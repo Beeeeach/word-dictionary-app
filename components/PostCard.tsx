@@ -11,6 +11,7 @@ import { ReactionTags } from "@/components/ReactionTags";
 import { CommentSection } from "@/components/CommentSection";
 import { PollCard } from "@/components/PollCard";
 import { PostCardMenu } from "@/components/PostCardMenu";
+import { FollowButton } from "@/components/FollowButton";
 
 function timeAgo(dateString: string, learnerMode: boolean): string {
   const diffMs = Date.now() - new Date(dateString).getTime();
@@ -54,18 +55,33 @@ export function PostCard({
   currentUserId,
   allEmotionTags,
   learnerMode = false,
+  initiallyFollowingAuthor = false,
+  showFollowButton = false,
 }: {
   post: PostWithRelations;
   currentUserId: string | null;
   allEmotionTags: EmotionTag[];
   /** 英語学習者モード。true の場合、投稿カード内の文言(時刻表示・非公開バッジ等)も英語になる */
   learnerMode?: boolean;
+  /**
+   * 投稿者を自分が既にフォロー中かどうか。
+   * 投稿詳細ページなど、事前にフォロー関係を取得できる画面から渡す。
+   */
+  initiallyFollowingAuthor?: boolean;
+  /**
+   * 投稿者へのフォローボタンをヘッダーに表示するかどうか。
+   * フィード・検索結果など一覧表示では出さず、投稿詳細ページ
+   * (app/post/[id]/page.tsx)でのみ true を渡す運用とする。
+   * (一覧側でフォロー中IDを都度取得するコストを避けるため)
+   */
+  showFollowButton?: boolean;
 }) {
   const router = useRouter();
   const t = getDictionary(learnerMode);
   const authorName =
     post.users?.display_name || post.users?.username || (learnerMode ? "Anonymous" : "名無し");
   const posterTags = post.post_emotion_tags?.map((pt) => pt.emotion_tags) ?? [];
+  const isOwnPost = currentUserId === post.user_id;
 
   return (
     <article
@@ -73,8 +89,8 @@ export function PostCard({
       className="rounded-2xl p-5 space-y-3 cursor-pointer transition-colors hover:bg-black/[0.015]"
       style={{ background: "var(--color-paper-raised)", border: "1px solid var(--color-line)" }}
     >
-      {/* ヘッダー: 投稿者・時刻・非公開バッジ */}
-      <div className="flex items-center justify-between text-xs" style={{ color: "var(--color-slate-light)" }}>
+      {/* ヘッダー: 投稿者・時刻・フォローボタン・非公開バッジ・メニュー */}
+      <div className="flex items-center justify-between gap-2 text-xs" style={{ color: "var(--color-slate-light)" }}>
         <StopPropagation>
           <Link
             href={`/u/${post.users?.username}`}
@@ -100,22 +116,38 @@ export function PostCard({
             <span className="shrink-0">・{timeAgo(post.created_at, learnerMode)}</span>
           </Link>
         </StopPropagation>
-        {post.visibility === "private" && (
-          <span
-            className="rounded-full px-2 py-0.5 text-[11px] font-medium shrink-0"
-            style={{ background: "var(--color-line)", color: "var(--color-slate)" }}
-          >
-            {t.postCard.private}
-          </span>
-        )}
-        <StopPropagation>
-          <PostCardMenu
-            postId={post.id}
-            postAuthorId={post.user_id}
-            currentUserId={currentUserId}
-            learnerMode={learnerMode}
-          />
-        </StopPropagation>
+
+        <div className="flex items-center gap-1.5 shrink-0">
+          {/* 投稿者を自分がフォローしていなければ、投稿詳細ページから直接フォローできるようにする */}
+          {showFollowButton && currentUserId && !isOwnPost && (
+            <StopPropagation>
+              <FollowButton
+                targetUserId={post.user_id}
+                initiallyFollowing={initiallyFollowingAuthor}
+                size="sm"
+                learnerMode={learnerMode}
+              />
+            </StopPropagation>
+          )}
+
+          {post.visibility === "private" && (
+            <span
+              className="rounded-full px-2 py-0.5 text-[11px] font-medium shrink-0"
+              style={{ background: "var(--color-line)", color: "var(--color-slate)" }}
+            >
+              {t.postCard.private}
+            </span>
+          )}
+
+          <StopPropagation>
+            <PostCardMenu
+              postId={post.id}
+              postAuthorId={post.user_id}
+              currentUserId={currentUserId}
+              learnerMode={learnerMode}
+            />
+          </StopPropagation>
+        </div>
       </div>
 
       {/* 単語（またはpoll_typeが投票の場合は投票タイトル） */}
@@ -179,13 +211,13 @@ export function PostCard({
             </p>
           )}
 
-          {/* 出会った文脈・ひとこと（入力があれば表示、視覚的な優先度は意味より低く統一） */}
-          {(post.context || post.note) && (
+          {/* ひとこと（入力があれば表示。「出会った文脈」項目は廃止したため、noteのみ表示する） */}
+          {post.note && (
             <p
               className="text-xs whitespace-pre-wrap"
               style={{ color: "var(--color-slate)" }}
             >
-              {[post.context, post.note].filter(Boolean).join(" ・ ")}
+              {post.note}
             </p>
           )}
 
@@ -216,21 +248,23 @@ export function PostCard({
       </StopPropagation>
 
       {/* フッター: いいね・コメント */}
+      {/* UI改善: いいねボタンは以前 pt-2 の余白の中に埋もれてタップしづらかったため、
+          コメント欄と同じ行の高さに正しく揃え、ボタン自体の当たり判定も
+          LikeButton側で拡張する。border-topの直下に十分な余白(py-1)を持たせ、
+          指の腹でも押しやすい縦位置に調整した。 */}
       <StopPropagation>
         <div
-          className="flex items-center gap-4 pt-2 border-t"
+          className="flex items-center gap-1 pt-3 mt-1 border-t"
           style={{ borderColor: "var(--color-line)" }}
         >
-          <div className="pt-2">
-            <LikeButton
-              postId={post.id}
-              initialCount={post.like_count}
-              initiallyLiked={post.liked_by_me ?? false}
-              disabled={!currentUserId}
-              learnerMode={learnerMode}
-            />
-          </div>
-          <div className="pt-2 flex-1">
+          <LikeButton
+            postId={post.id}
+            initialCount={post.like_count}
+            initiallyLiked={post.liked_by_me ?? false}
+            disabled={!currentUserId}
+            learnerMode={learnerMode}
+          />
+          <div className="flex-1 min-w-0">
             <CommentSection
               postId={post.id}
               commentCount={post.comment_count}
