@@ -4,6 +4,13 @@ import { useState, useTransition } from "react";
 import { toggleLike } from "@/lib/actions/likes";
 import { getDictionary } from "@/lib/i18n/dictionary";
 
+/**
+ * UI改善: 以前はテキストと同じ高さのインラインボタンで、
+ * コメント欄と並んだ際に上下位置がずれて見えたり、
+ * タップ領域が文字とアイコンの実サイズ分しかなくスマホで押しづらかった。
+ * 縦方向に十分なpaddingを確保して44px相当のタップ領域に近づけ、
+ * 角丸の背景(ホバー/押下時)を敷いて「押せる場所」であることを分かりやすくする。
+ */
 export function LikeButton({
   postId,
   initialCount,
@@ -48,14 +55,18 @@ export function LikeButton({
       type="button"
       onClick={handleClick}
       disabled={disabled}
-      className={`flex items-center gap-1 font-bold transition-colors ${
-        disabled ? "opacity-50 cursor-not-allowed" : ""
+      className={`flex items-center gap-1.5 font-bold rounded-full transition-colors shrink-0 ${
+        disabled ? "opacity-50 cursor-not-allowed" : "hover:bg-black/[0.05]"
       }`}
-      style={{ color: liked ? "var(--color-coral)" : "var(--color-slate)" }}
+      style={{
+        color: liked ? "var(--color-coral)" : "var(--color-slate)",
+        padding: "8px 12px",
+        marginLeft: "-8px", // 見た目の左端をカード全体の内側マージンに揃えるための補正
+      }}
       title={disabled ? t.postCard.loginToLike : undefined}
     >
-      <span>{liked ? "❤️" : "🤍"}</span>
-      <span>{count}</span>
+      <span style={{ fontSize: "18px", lineHeight: 1 }}>{liked ? "❤️" : "🤍"}</span>
+      <span className="text-sm">{count}</span>
     </button>
   );
 }
