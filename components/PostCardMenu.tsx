@@ -11,6 +11,11 @@ import { getDictionary } from "@/lib/i18n/dictionary";
 /**
  * 投稿カード右上に出す「…」メニュー。
  * 自分の投稿なら削除、他人の投稿なら通報・ブロックを選べる。
+ *
+ * UI改善: 「⋯」の文字自体は小さいままだが、周辺のタップ領域を
+ * 44x44px(モバイルの推奨タップサイズ)相当まで広げ、スマホでも
+ * 押しやすくする。視認性のため、記号のフォントサイズも拡大し、
+ * 円形の背景を敷いて押せる場所であることが分かるようにする。
  */
 export function PostCardMenu({
   postId,
@@ -58,8 +63,14 @@ export function PostCardMenu({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="text-xs px-1.5 shrink-0"
-        style={{ color: "var(--color-slate-light)" }}
+        className="flex items-center justify-center rounded-full shrink-0 transition-colors hover:bg-black/[0.05]"
+        style={{
+          width: "36px",
+          height: "36px",
+          fontSize: "20px",
+          lineHeight: 1,
+          color: "var(--color-slate)",
+        }}
         aria-label="menu"
       >
         ⋯
@@ -69,8 +80,8 @@ export function PostCardMenu({
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
           <div
-            className="absolute right-0 top-full mt-1 z-50 rounded-xl overflow-hidden text-sm"
-            style={{ background: "var(--color-paper-raised)", border: "1px solid var(--color-line)", minWidth: "140px" }}
+            className="absolute right-0 top-full mt-1 z-50 rounded-xl overflow-hidden text-sm shadow-lg"
+            style={{ background: "var(--color-paper-raised)", border: "1px solid var(--color-line)", minWidth: "160px" }}
           >
             {isOwn ? (
               <button
@@ -80,7 +91,7 @@ export function PostCardMenu({
                   setOpen(false);
                   handleDelete();
                 }}
-                className="block w-full text-left px-4 py-2.5 disabled:opacity-50"
+                className="block w-full text-left px-4 py-3 disabled:opacity-50"
                 style={{ color: "var(--color-coral-dark)" }}
               >
                 {t.common.delete}
@@ -93,7 +104,7 @@ export function PostCardMenu({
                     setOpen(false);
                     setReportOpen(true);
                   }}
-                  className="block w-full text-left px-4 py-2.5"
+                  className="block w-full text-left px-4 py-3"
                   style={{ color: "var(--color-ink)" }}
                 >
                   {t.report.button}
@@ -105,7 +116,7 @@ export function PostCardMenu({
                     setOpen(false);
                     handleBlock();
                   }}
-                  className="block w-full text-left px-4 py-2.5 disabled:opacity-50"
+                  className="block w-full text-left px-4 py-3 disabled:opacity-50"
                   style={{ color: "var(--color-coral-dark)" }}
                 >
                   {t.block.block}
