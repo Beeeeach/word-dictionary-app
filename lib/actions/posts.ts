@@ -18,7 +18,9 @@ const ALLOWED_PHOTO_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif
 
 /**
  * 投稿を作成する。
- * 企画書4-1: 単語のみ必須、意味・文脈・写真・タグは任意。
+ * 単語のみ必須、意味・写真・タグは任意。
+ * 「出会った文脈」欄はUI改善により廃止したため、ここでは扱わない
+ * (DBのcontextカラム自体は残っているが、常にnullで保存される)。
  * 写真がある場合は先にStorageへアップロードしてからpostsに保存する。
  *
  * タグ(post_emotion_tags)は「テーマ/感情/目的/雰囲気/形式/対象/シーン」の
@@ -27,7 +29,7 @@ const ALLOWED_PHOTO_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif
  * 荒らし防止のため、以下を保存前にチェックする:
  *  - 直近1分間の投稿数が3件を超えていないか(レート制限)
  *  - 直近1分間に全く同じ単語を投稿していないか(連打防止)
- *  - 禁止ワードを含んでいないか(単語・意味・文脈・ひとこと)
+ *  - 禁止ワードを含んでいないか(単語・意味・ひとこと)
  */
 export async function createPost(
   _prevState: CreatePostResult,
@@ -45,7 +47,6 @@ export async function createPost(
 
   const word = String(formData.get("word") ?? "").trim();
   const meaning = String(formData.get("meaning") ?? "").trim();
-  const context = String(formData.get("context") ?? "").trim();
   const note = String(formData.get("note") ?? "").trim();
   const visibility = formData.get("visibility") === "private" ? "private" : "public";
   const emotionTagIds = Array.from(
@@ -75,7 +76,6 @@ export async function createPost(
   const bannedWordError =
     validateNoBannedWords(word) ||
     validateNoBannedWords(meaning) ||
-    validateNoBannedWords(context) ||
     validateNoBannedWords(note);
   if (bannedWordError) {
     return { error: bannedWordError };
@@ -131,7 +131,7 @@ export async function createPost(
       user_id: user.id,
       word,
       meaning: meaning || null,
-      context: context || null,
+      context: null,
       photo_url: photoUrl,
       note: note || null,
       visibility,
