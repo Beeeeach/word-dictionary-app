@@ -167,27 +167,6 @@ export function PostForm({
         )}
       </div>
 
-      {/* 出会った文脈（任意） */}
-      <div>
-        <label
-          htmlFor="context"
-          className="block text-xs font-bold mb-1"
-          style={{ color: "var(--color-slate)" }}
-        >
-          {t.post.contextLabel}
-        </label>
-        <textarea
-          id="context"
-          name="context"
-          rows={2}
-          placeholder={t.post.contextPlaceholder}
-          className="w-full rounded-xl border-2 px-3 py-2 text-sm outline-none transition-colors resize-none"
-          style={{ borderColor: "var(--color-line)", color: "var(--color-ink)" }}
-          onFocus={(e) => (e.currentTarget.style.borderColor = "var(--color-indigo)")}
-          onBlur={(e) => (e.currentTarget.style.borderColor = "var(--color-line)")}
-        />
-      </div>
-
       {/* タグ（任意・最大5個・カテゴリ別オーバーレイから選択） */}
       <div>
         <span
@@ -288,7 +267,7 @@ export function PostForm({
         />
       </div>
 
-      {/* 自由記述欄（意味・文脈とは別枠のひとこと） */}
+      {/* 自由記述欄（意味とは別枠のひとこと） */}
       <div>
         <label
           htmlFor="note"
